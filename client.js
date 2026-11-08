@@ -3115,14 +3115,50 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 					.catch(() => setCfg({ enabled: false }));
 			}, []);
 			useEffect(() => {
-				const sync = () => { try { setRt(isRedteamModeActive()); } catch { setRt(false); } };
+				const sync = () => {
+					let on = false;
+					try {
+						on = isRedteamModeActive();
+					} catch { on = false; }
+					/* 加严：再独立校验当前会话的 agentPreset 是否真是 redteam，
+					   避免 isRedteamModeActive 的 DOM 兜底（模式下拉/标签文本）在普通会话误判。 */
+					if (on) {
+						try {
+							const sessions = rewindSessions || (rewindHost && rewindHost.sessions);
+							const sid = currentSessionId(sessions);
+							let preset = "";
+							if (sid && sessions) {
+								const snap = typeof sessions.list?.getSnapshot === "function" ? sessions.list.getSnapshot() : null;
+								const sess = snap && snap.byId ? snap.byId[sid] : null;
+								preset = readSessionAgentPreset(sess) || "";
+							}
+							if (preset) on = isRedteamPresetId(preset);
+							else on = false;   /* 拿不到会话 preset：宁可不铺，避免污染普通会话 */
+						} catch { on = false; }
+					}
+					setRt(on);
+				};
 				sync();
-				const iv = setInterval(sync, 1500);
+				const iv = setInterval(sync, 1000);
 				return () => clearInterval(iv);
 			}, []);
 			useEffect(() => {
-				if (!cfg || !rt) return undefined;
-				const on = !!cfg.enabled && !!cfg.dataUrl;
+				if (!cfg) return undefined;
+				const on = !!cfg.enabled && !!cfg.dataUrl && !!rt;
+				/* 非红队或未启用：确保把之前的绘制清掉 */
+				if (!on) {
+					for (const el of document.querySelectorAll('[data-dsh-purge-bg]')) {
+						try {
+							el.style.backgroundImage = '';
+							el.style.backgroundSize = '';
+							el.style.backgroundPosition = '';
+							el.style.backgroundAttachment = '';
+							el.style.backgroundRepeat = '';
+							el.removeAttribute('data-dsh-purge-bg');
+						} catch { /* ignore */ }
+					}
+					return undefined;
+				}
 				const attr = 'data-dsh-purge-bg';
 				const paint = (el) => {
 					if (!on) {
@@ -3130,6 +3166,7 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 						el.style.backgroundSize = '';
 						el.style.backgroundPosition = '';
 						el.style.backgroundAttachment = '';
+						el.style.backgroundRepeat = '';
 						el.removeAttribute(attr);
 						return;
 					}
@@ -3138,8 +3175,9 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 					const veil = Math.max(0, Math.min(1, 1 - (cfg.opacity || 0.35))).toFixed(2);
 					el.style.backgroundImage = 'linear-gradient(rgba(' + rgb + ',' + veil + '),rgba(' + rgb + ',' + veil + ')),url(' + cfg.dataUrl + ')';
 					el.style.backgroundSize = 'cover,cover';
-					el.style.backgroundPosition = 'center,center';
-					el.style.backgroundAttachment = 'local,local';
+					el.style.backgroundPosition = 'center center, center center';
+					el.style.backgroundAttachment = 'fixed, fixed';
+					el.style.backgroundRepeat = 'no-repeat, no-repeat';
 					el.setAttribute(attr, '1');
 				};
 				const tick = () => {
