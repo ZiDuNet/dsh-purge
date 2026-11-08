@@ -8306,13 +8306,11 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 
 		/* 侧栏「破甲控制台」整页渲染：复用 dock 页签与 body，占满 main（页面模式，非弹窗） */
 		function PurgeDockPage() {
-			/* 侧栏入口定稿：点菜单 = 打开浮窗（弹窗模式），本页零 React 依赖（纯占位）。 */
+			/* 侧栏入口定稿：无占位页——main 渲染 null，仅拉起浮窗（回对话点侧栏会话项）。 */
 			setTimeout(() => {
 				try { setDock({ open: true, tab: "drill", authOpen: false, pageMode: false, pending: "tab" }); } catch { /* ignore */ }
 			}, 0);
-			return h("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", height: "70vh", flexDirection: "column", gap: 12 } },
-				h("div", { style: { fontSize: 15, fontWeight: 600 } }, "🛡 破甲控制台已在浮窗打开"),
-				h("div", { style: { fontSize: 12.5, color: "var(--dsw-alias-label-secondary)" } }, "点击页面任意处回到对话。"));
+			return null;
 		}
 
 
