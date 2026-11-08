@@ -8306,9 +8306,19 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 
 		/* 侧栏「破甲控制台」整页渲染：复用 dock 页签与 body，占满 main（页面模式，非弹窗） */
 		function PurgeDockPage() {
-			/* 页面模式：复用 PurgeDock 组件本体（内部已支持 st.pageMode 全屏渲染与页签联动）。
-			   main slot 由宿主按侧栏选中态挂载/卸载，open 状态交给用户在页面里控制。 */
-			return h(PurgeDock, { pageMode: true });
+			/* 侧栏入口定稿：点击菜单 = 拉起浮窗（弹窗模式），本页只留占位引导。 */
+			const st = useDock();
+			const t = useT();
+			React.useEffect(() => {
+				try { setDock({ open: true, tab: st.tab || "drill", authOpen: false, pageMode: false, pending: "tab" }); } catch { /* ignore */ }
+			}, []);
+			return h("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", height: "70vh", flexDirection: "column", gap: 12 } },
+				h("div", { style: { fontSize: 15, fontWeight: 600 } }, "🛡 破甲控制台已在浮窗打开"),
+				h("div", { style: { fontSize: 12.5, color: "var(--dsw-alias-label-secondary)" } },
+					st.open ? "浮窗在对话页上方，点击页面任意处可回到对话。" : "若浮窗未出现，点下面按钮重新打开。"),
+				st.open ? null : h("button", { type: "button", className: "rt-btn rt-btn-primary",
+					onClick: () => setDock({ open: true, tab: st.tab || "drill", authOpen: false, pageMode: false, pending: "tab" }) },
+					"打开破甲控制台"));
 		}
 
 
