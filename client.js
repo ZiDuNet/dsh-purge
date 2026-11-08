@@ -127,10 +127,11 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 
 		const zh = {
 			nav: "规则设定",
-			"dock.clean": "清洗",
-			"dock.drill": "演练台",
+			"dock.clean": "⚙️ 清洗",
+			"dock.drill": "🎯 演练台",
 			"dock.toggle": "dsh-purge",
-			"dock.newSession": "dsh-purge",
+			"dock.newSession": "🛡 破甲控制台",
+			"dock.knowledge": "📚 知识库",
 			"dock.inSession": "dsh-purge",
 			"dock.redteam": "红队模式",
 			"dock.full": "全面浏览",
@@ -488,10 +489,11 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 
 		const en = {
 			nav: "Rules",
-			"dock.clean": "Clean",
-			"dock.drill": "Drill",
+			"dock.clean": "⚙️ Clean",
+			"dock.drill": "🎯 Drill",
 			"dock.toggle": "dsh-purge",
-			"dock.newSession": "dsh-purge",
+			"dock.newSession": "🛡 破甲控制台",
+			"dock.knowledge": "📚 Knowledge",
 			"dock.inSession": "dsh-purge",
 			"dock.redteam": "Red team",
 			"dock.full": "Full view",
@@ -8235,8 +8237,8 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 					}
 					if (drillGrantPosting > 0) return;
 					setDrillAuthLocal(false);
-					if (dockBus.authOpen || dockBus.tab === "drill") {
-						setDock({ open: true, tab: "drill", authOpen: true, pending: dockBus.pending || "tab" });
+					if (dockBus.authOpen || dockBus.tab === "drill" || dockBus.tab === "knowledge") {
+						setDock({ open: true, tab: dockBus.tab === "knowledge" ? "knowledge" : "drill", authOpen: true, pending: dockBus.pending || "tab" });
 					}
 				})
 				.catch(() => {
@@ -8290,6 +8292,16 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 
 		function requestDrillEnv() {
 			requestDrill("env");
+		}
+
+		/* 知识库：与演练台同级入口。同授权域（读演练台数据），进入后演练台面板直接落在知识库页签。 */
+		function requestKnowledge() {
+			if (readDrillAuth()) {
+				setDock({ open: true, tab: "knowledge", authOpen: false, pending: "tab" });
+				try { if (__dshPurgeDrill && __dshPurgeDrill.setUI) __dshPurgeDrill.setUI({ open: true, tab: "knowledge" }); } catch { /* ignore */ }
+				return;
+			}
+			setDock({ open: true, tab: "knowledge", authOpen: true, pending: "knowledge" });
 		}
 
 		function openDockClean() {
@@ -8465,10 +8477,13 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 								if (!ready) return;
 								writeDrillAuth(true);
 								const kind = props.pending || "tab";
-								setDock({ authOpen: false, open: true, tab: "drill", pending: "tab" });
+								setDock({ authOpen: false, open: true, tab: kind === "knowledge" ? "knowledge" : "drill", pending: "tab" });
 								try { if (__dshPurgeDrill && __dshPurgeDrill.setUI) __dshPurgeDrill.setUI({ open: true }); } catch { /* ignore */ }
 								if (kind === "env") {
 									try { if (__dshPurgeDrill && __dshPurgeDrill.setUI) __dshPurgeDrill.setUI({ open: true, tab: "env" }); } catch { /* ignore */ }
+								}
+								if (kind === "knowledge") {
+									try { if (__dshPurgeDrill && __dshPurgeDrill.setUI) __dshPurgeDrill.setUI({ open: true, tab: "knowledge" }); } catch { /* ignore */ }
 								}
 								if (kind === "full") {
 									try { window.open(window.location.href.split("#")[0] + "#redteam-full", "_blank", "noopener"); } catch { /* ignore */ }
@@ -8878,6 +8893,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 			}, [st.tab, st.open]);
 			const onTab = (id) => {
 				if (id === "drill") { requestDrill("tab"); return; }
+				if (id === "knowledge") { requestKnowledge(); return; }
 				setDock({ tab: "clean", authOpen: false, pending: "tab" });
 			};
 			const startDrag = (e) => {
@@ -8960,7 +8976,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 			};
 			const body = st.tab === "clean"
 				? h(SettingsRoot, { t })
-				: (readDrillAuth() && __dshPurgeDrill.Panel
+				: ((st.tab === "drill" || st.tab === "knowledge") && readDrillAuth() && __dshPurgeDrill.Panel
 					? h(__dshPurgeDrill.Panel, { embedded: true })
 					: h("div", { style: { padding: 16, color: "var(--dsw-alias-label-secondary)" } }, t("dock.unauthorized")));
 			const panel = h("div", {
@@ -8977,9 +8993,9 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 				},
 			},
 				h("div", { className: "dshp-dock-head", onMouseDown: startDrag, title: "Drag to move the panel" },
-					h("b", null, "dsh-purge"),
+					h("b", null, "🛡 破甲控制台"),
 					h("span", { style: { flex: 1 } }),
-					st.tab === "drill" && readDrillAuth()
+					(st.tab === "drill" || st.tab === "knowledge") && readDrillAuth()
 						? h("button", { type: "button", onClick: () => requestDrill("full") }, t("dock.full"))
 						: null,
 					h("button", { type: "button", onClick: () => setDock({ open: false, authOpen: false, tab: "clean", pending: "tab" }) }, t("dock.close")),
@@ -8999,6 +9015,13 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 						"aria-selected": st.tab === "drill" ? "true" : "false",
 						onClick: () => onTab("drill"),
 					}, t("dock.drill") + (readDrillAuth() ? "" : " · " + t("dock.unauthorized"))),
+					h("button", {
+						type: "button",
+						className: "dshp-dock-tab" + (st.tab === "knowledge" ? " on" : ""),
+						role: "tab",
+						"aria-selected": st.tab === "knowledge" ? "true" : "false",
+						onClick: () => onTab("knowledge"),
+					}, t("dock.knowledge") + (readDrillAuth() ? "" : " · " + t("dock.unauthorized"))),
 				),
 				h("div", { className: "dshp-dock-body" }, body),
 				h("div", { className: "dshp-dock-resize-l", title: "Drag to resize width", onMouseDown: startResizeLeft }),
