@@ -1091,6 +1091,10 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 .dshp-tab-btn:hover{color:var(--dsw-alias-label-primary,currentColor)}
 .dshp-tab-btn.on{color:var(--dsw-alias-brand-primary,#6dbf8c)}
 .dshp-tab-btn.on:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;border-radius:2px;background:var(--dsw-alias-brand-primary,#6dbf8c)}
+/* 页面化 dock：侧栏进入时占满 main 区域，不再是浮动小窗 */
+.dshp-dock-page{border-radius:0 !important;box-shadow:none !important;z-index:auto !important}
+.dshp-dock-page .dshp-dock-head{cursor:default}
+.dshp-dock-page .dshp-dock-body{flex:1;overflow:auto}
 /* 宿主工具条按钮常继承图标字体 / font-size:0 / color:transparent，字在 DOM 里但看不见（#169）。 */
 .dshp-hero-chip-btn,.dshp-tab-btn,.dshp-launch,.dshp-icon-btn,.dshp-hbtn,.dshp-btn,.dshp-dock-tab,.dshp-dock-head button,.dshp-auth-ops button,.dshp-switch button{
   font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif!important;
@@ -8252,7 +8256,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 				});
 		}
 
-		let dockBus = { open: false, tab: "clean", authOpen: false, pending: "tab", listeners: new Set() };
+		let dockBus = { open: false, tab: "clean", authOpen: false, pending: "tab", pageMode: false, listeners: new Set() };
 		function getDock() { return dockBus; }
 		function setDock(patch) {
 			dockBus = Object.assign({}, dockBus, patch);
@@ -8278,7 +8282,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 				} catch { /* ignore */ }
 			};
 			if (readDrillAuth()) {
-				setDock({ open: true, tab: "drill", authOpen: false, pending: "tab" });
+				setDock({ open: true, tab: "drill", authOpen: false, pageMode: false, pending: "tab" });
 				try { if (__dshPurgeDrill && __dshPurgeDrill.setUI) __dshPurgeDrill.setUI({ open: true }); } catch { /* ignore */ }
 				if (pending === "env") openEnv();
 				if (pending === "full") {
@@ -8287,7 +8291,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 				return;
 			}
 			/* 未授权：直接切到演练台页签并弹出授权窗（不再停在清洗页，避免像「没触发」） */
-			setDock({ open: true, tab: "drill", authOpen: true, pending: pending });
+			setDock({ open: true, tab: "drill", authOpen: true, pageMode: false, pending: pending });
 		}
 
 		function requestDrillEnv() {
@@ -8295,13 +8299,45 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 		}
 
 		/* 知识库：与演练台同级入口。同授权域（读演练台数据），进入后演练台面板直接落在知识库页签。 */
+		function openDockPage(tab) {
+			setDock({ open: true, tab: tab || "drill", authOpen: false, pageMode: true, pending: "tab" });
+			try { if (__dshPurgeDrill && __dshPurgeDrill.setUI) __dshPurgeDrill.setUI({ open: true, tab: tab === "knowledge" ? "knowledge" : undefined }); } catch { /* ignore */ }
+		}
+
+		/* 侧栏「破甲控制台」整页渲染：复用 dock 页签与 body，占满 main（页面模式，非弹窗） */
+		function PurgeDockPage() {
+			const st = useDock();
+			const pageSt = Object.assign({}, st, { pageMode: true, open: true });
+			const body = pageSt.tab === "clean"
+				? h(SettingsRoot, { t })
+				: (readDrillAuth() && __dshPurgeDrill.Panel
+					? h(__dshPurgeDrill.Panel, { embedded: false })
+					: h("div", { style: { padding: 16, color: "var(--dsw-alias-label-secondary)" } }, t("dock.unauthorized")));
+			return h("div", { className: "dshp-dock dshp-dock-page", "data-theme": dockTheme === "white" ? "white" : "dusk", "data-open": "1",
+				style: { position: "relative", left: 0, top: 0, width: "100%", height: "100%" } },
+				h("div", { className: "dshp-dock-head" },
+					h("b", null, "🛡 破甲控制台"),
+					h("span", { style: { flex: 1 } }),
+					h("button", { type: "button", onClick: () => setDock({ open: false, authOpen: false, tab: "clean", pending: "tab" }) }, "← 返回对话")),
+				h("div", { className: "dshp-dock-tabs", role: "tablist" },
+					h("button", { type: "button", className: "dshp-dock-tab" + (pageSt.tab === "clean" ? " on" : ""), role: "tab",
+						"aria-selected": pageSt.tab === "clean" ? "true" : "false", onClick: () => setDock({ tab: "clean", authOpen: false, pending: "tab" }) }, t("dock.clean")),
+					h("button", { type: "button", className: "dshp-dock-tab" + (pageSt.tab === "drill" ? " on" : ""), role: "tab",
+						"aria-selected": pageSt.tab === "drill" ? "true" : "false", onClick: () => requestDrill("tab") },
+						t("dock.drill") + (readDrillAuth() ? "" : " · " + t("dock.unauthorized"))),
+					h("button", { type: "button", className: "dshp-dock-tab" + (pageSt.tab === "knowledge" ? " on" : ""), role: "tab",
+						"aria-selected": pageSt.tab === "knowledge" ? "true" : "false", onClick: () => requestKnowledge() },
+						t("dock.knowledge") + (readDrillAuth() ? "" : " · " + t("dock.unauthorized")))),
+				h("div", { className: "dshp-dock-body" }, body));
+		}
+
 		function requestKnowledge() {
 			if (readDrillAuth()) {
-				setDock({ open: true, tab: "knowledge", authOpen: false, pending: "tab" });
+				setDock({ open: true, tab: "knowledge", authOpen: false, pageMode: false, pending: "tab" });
 				try { if (__dshPurgeDrill && __dshPurgeDrill.setUI) __dshPurgeDrill.setUI({ open: true, tab: "knowledge" }); } catch { /* ignore */ }
 				return;
 			}
-			setDock({ open: true, tab: "knowledge", authOpen: true, pending: "knowledge" });
+			setDock({ open: true, tab: "knowledge", authOpen: true, pageMode: false, pending: "knowledge" });
 		}
 
 		function openDockClean() {
@@ -8980,10 +9016,13 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 					? h(__dshPurgeDrill.Panel, { embedded: true })
 					: h("div", { style: { padding: 16, color: "var(--dsw-alias-label-secondary)" } }, t("dock.unauthorized")));
 			const panel = h("div", {
-				className: "dshp-dock",
+				className: "dshp-dock" + (st.pageMode ? " dshp-dock-page" : ""),
 				"data-theme": dockTheme === "white" ? "white" : "dusk",
 				"data-open": st.open ? "1" : "0",
-				style: {
+				style: st.pageMode ? {
+					left: "0px", top: "0px", right: "auto", bottom: "auto",
+					width: "100%", height: "100%",
+				} : {
 					left: geom.x + "px",
 					top: geom.y + "px",
 					right: "auto",
@@ -8992,13 +9031,13 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 					height: geom.h + "px",
 				},
 			},
-				h("div", { className: "dshp-dock-head", onMouseDown: startDrag, title: "Drag to move the panel" },
+				h("div", { className: "dshp-dock-head", onMouseDown: st.pageMode ? undefined : startDrag, title: st.pageMode ? undefined : "Drag to move the panel" },
 					h("b", null, "🛡 破甲控制台"),
 					h("span", { style: { flex: 1 } }),
 					(st.tab === "drill" || st.tab === "knowledge") && readDrillAuth()
 						? h("button", { type: "button", onClick: () => requestDrill("full") }, t("dock.full"))
 						: null,
-					h("button", { type: "button", onClick: () => setDock({ open: false, authOpen: false, tab: "clean", pending: "tab" }) }, t("dock.close")),
+					h("button", { type: "button", onClick: () => setDock({ open: false, authOpen: false, tab: "clean", pending: "tab" }) }, st.pageMode ? "← 返回对话" : t("dock.close")),
 				),
 				h("div", { className: "dshp-dock-tabs", role: "tablist" },
 					h("button", {
@@ -9024,10 +9063,10 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 					}, t("dock.knowledge") + (readDrillAuth() ? "" : " · " + t("dock.unauthorized"))),
 				),
 				h("div", { className: "dshp-dock-body" }, body),
-				h("div", { className: "dshp-dock-resize-l", title: "Drag to resize width", onMouseDown: startResizeLeft }),
-				h("div", { className: "dshp-dock-resize-r", title: "Drag to resize width", onMouseDown: startResizeRight }),
-				h("div", { className: "dshp-dock-resize-b", title: "Drag to resize height", onMouseDown: startResizeBottom }),
-				h("div", { className: "dshp-dock-resize", title: "Drag to resize", onMouseDown: startResize }),
+				st.pageMode ? null : h("div", { className: "dshp-dock-resize-l", title: "Drag to resize width", onMouseDown: startResizeLeft }),
+				st.pageMode ? null : h("div", { className: "dshp-dock-resize-r", title: "Drag to resize width", onMouseDown: startResizeRight }),
+				st.pageMode ? null : h("div", { className: "dshp-dock-resize-b", title: "Drag to resize height", onMouseDown: startResizeBottom }),
+				st.pageMode ? null : h("div", { className: "dshp-dock-resize", title: "Drag to resize", onMouseDown: startResize }),
 			);
 			let portal = null;
 			let authPortal = null;
@@ -9178,7 +9217,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 					clearInterval(iv);
 				};
 			}, []);
-			if (!host) return null;
+			if (!host || !rtMode) return null;
 			const btn = h("button", {
 				type: "button",
 				className: "dshp-hero-chip-btn" + (st.open ? " on" : ""),
@@ -9199,6 +9238,13 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 		function TabRowPurgeMount() {
 			const t = useT();
 			const st = useDock();
+			const [rtMode, setRtMode] = useState(false);
+			useEffect(() => {
+				const sync = () => { try { setRtMode(isRedteamModeActive()); } catch { setRtMode(false); } };
+				sync();
+				const iv = setInterval(sync, 1000);
+				return () => clearInterval(iv);
+			}, []);
 			const [host, setHost] = useState(null);
 			useEffect(() => {
 				let dead = false;
@@ -9488,7 +9534,20 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 				name: "shell.overlay",
 				id: "dsh-purge-dock",
 				order: 50,
-			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeLauncher), h(PurgeDock), h(HeroNewSessionMount), h(TabRowPurgeMount), h(EnvAdaptSendGate), h(RewindDockMount))));
+			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeDock), h(HeroNewSessionMount), h(TabRowPurgeMount), h(EnvAdaptSendGate), h(RewindDockMount))));
+			/* 左侧菜单入口（与「对话」等同级页面）：侧栏图标 + main 整页（页面模式，非弹窗） */
+			try {
+				const ShieldIcon = () => h("svg", { viewBox: "0 0 64 64", width: 18, height: 18, "aria-hidden": true, style: { display: "block" } },
+					h("path", { d: "M32 6 L54 14 V32 C54 46 44 55 32 60 C20 55 10 46 10 32 V14 Z", fill: "none", stroke: "currentColor", strokeWidth: 5, strokeLinejoin: "round" }),
+					h("path", { d: "M22 31 L29 38 L43 24", fill: "none", stroke: "currentColor", strokeWidth: 5, strokeLinecap: "round", strokeLinejoin: "round" }));
+				ctx.slots.inject("sidebar.panellist", () => ctx.slots.register({
+					name: "sidebar.panellist",
+					id: "dsh-purge-console",
+					order: 300,
+					label: () => "🛡 破甲控制台",
+				}, ShieldIcon));
+				ctx.slots.inject("main", () => ctx.slots.register({ name: "main", key: "dsh-purge-console" }, PurgeDockPage));
+			} catch (e) { try { console.warn("[dsh-purge] sidebar/main slots skipped:", e); } catch { /* ignore */ } }
 			try {
 				if (typeof ctx.inject === "function") {
 					ctx.inject(["sessions", "uiWorkspace", "workspaces", "conversation"], (host) => installRewindUi(host));
