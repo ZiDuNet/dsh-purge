@@ -3036,50 +3036,73 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 		/* 红队模式对话区背景图：设置卡（上传/URL/透明度/开关）+ 全局背景层 */
 		function RedteamBgCard() {
 			const [cfg, setCfg] = useState({ enabled: false, dataUrl: "", opacity: 0.35 });
+			const [draft, setDraft] = useState(null);
 			const [loaded, setLoaded] = useState(false);
 			const [err, setErr] = useState(null);
 			const [msg, setMsg] = useState(null);
+			const [busy, setBusy] = useState(false);
+			const apiPost = (body) => fetch('/redteam/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+				.then((r) => r.text().then((x) => { try { return JSON.parse(x); } catch { return { ok: false, error: r.status + ' 非 JSON' }; } }));
 			useEffect(() => {
-				fetch('/redteam/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'bgGet' }) })
-					.then((r) => r.json()).then((r) => { setCfg({ enabled: !!r.enabled, dataUrl: r.dataUrl || "", opacity: Number(r.opacity) || 0.35 }); setLoaded(true); })
+				apiPost({ op: 'bgGet' })
+					.then((r) => {
+						const c = { enabled: !!r.enabled, dataUrl: r.dataUrl || '', opacity: Number(r.opacity) || 0.35 };
+						setCfg(c); setDraft(c); setLoaded(true);
+						if (r.ok === false) setErr(r.error || '读取失败');
+					})
 					.catch((e) => { setErr(String(e.message || e)); setLoaded(true); });
 			}, []);
-			const save = (next) => {
-				setCfg(next); setErr(null); setMsg(null);
-				fetch('/redteam/api', { method: 'POST', headers: { 'content-type': 'application/json' },
-					body: JSON.stringify({ op: 'bgSave', enabled: next.enabled, dataUrl: next.dataUrl, opacity: next.opacity }) })
-					.then((r) => r.json()).then((r) => { if (r.ok === false) setErr(r.error || '保存失败'); else setMsg('已保存，刷新后生效'); })
-					.catch((e) => setErr(String(e.message || e)));
-			};
 			const onFile = (e) => {
 				const f = e.target.files && e.target.files[0];
 				if (!f) return;
 				if (f.size > 6 * 1024 * 1024) { setErr('图片超过 6MB，请压缩后再传'); return; }
 				const rd = new FileReader();
-				rd.onload = () => save(Object.assign({}, cfg, { dataUrl: String(rd.result) }));
+				rd.onload = () => { setDraft(Object.assign({}, draft, { dataUrl: String(rd.result) })); setErr(null); setMsg('已选择图片，点「保存」生效'); };
 				rd.readAsDataURL(f);
 			};
-			if (!loaded) return h('div', { style: { opacity: 0.6, fontSize: 12 } }, '背景图设置加载中…');
+			const save = () => {
+				if (!draft) return;
+				setBusy(true); setErr(null); setMsg(null);
+				apiPost({ op: 'bgSave', enabled: !!draft.enabled, dataUrl: draft.dataUrl || '', opacity: draft.opacity })
+					.then((r) => {
+						if (r.ok === false) { setErr(r.error || '保存失败'); return; }
+						setCfg({ enabled: !!r.enabled, dataUrl: r.dataUrl || '', opacity: Number(r.opacity) || 0.35 });
+						setMsg('已保存 ✓ 刷新页面或切到红队会话即生效');
+					})
+					.catch((e) => setErr(String(e.message || e)))
+					.finally(() => setBusy(false));
+			};
+			if (!loaded) return h('div', { style: { opacity: 0.6, fontSize: 12, padding: 8 } }, '背景图设置加载中…');
+			const d = draft || cfg;
+			const dirty = draft && cfg && (draft.dataUrl !== cfg.dataUrl || draft.opacity !== cfg.opacity || !!draft.enabled !== !!cfg.enabled);
 			return h('div', { style: { borderTop: '1px solid var(--dsw-alias-border-l1,#ddd)', marginTop: 14, paddingTop: 12 } },
 				h('h3', { style: { margin: '0 0 6px', fontSize: 13 } }, '🎨 红队模式背景图'),
 				h('div', { style: { fontSize: 12, color: 'var(--dsw-alias-label-secondary,#777)', marginBottom: 8 } },
-					'红队模式会话时给对话区铺自定义背景（半透明）。仅本机保存。'),
-				err ? h('div', { style: { color: '#b91c1c', fontSize: 12, marginBottom: 6 } }, err) : null,
+					'红队模式会话时铺到对话区背景（自动按主题淡化，不影响文字）。仅本机保存，不上传服务器。'),
+				err ? h('div', { style: { color: '#b91c1c', fontSize: 12, marginBottom: 6 } }, '✗ ' + err) : null,
 				msg ? h('div', { style: { color: '#15803d', fontSize: 12, marginBottom: 6 } }, msg) : null,
-				h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' } },
+				h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 } },
 					h('label', { style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, cursor: 'pointer' } },
-						h('input', { type: 'checkbox', checked: cfg.enabled, onChange: (e) => save(Object.assign({}, cfg, { enabled: e.target.checked })) }),
+						h('input', { type: 'checkbox', checked: !!d.enabled, onChange: (e) => setDraft(Object.assign({}, d, { enabled: e.target.checked })) }),
 						'启用（仅红队模式）'),
-					cfg.dataUrl ? h('img', { src: cfg.dataUrl, alt: '预览', style: { height: 42, borderRadius: 6, border: '1px solid var(--dsw-alias-border-l1,#ddd)' } }) : null),
-				h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 8 } },
+					d.dataUrl ? h('img', { src: d.dataUrl, alt: '预览', style: { height: 44, borderRadius: 6, border: '1px solid var(--dsw-alias-border-l1,#ddd)' } }) : h('span', { style: { fontSize: 12, color: 'var(--dsw-alias-label-secondary,#999)' } }, '（未选择图片）')),
+				h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' } },
 					h('input', { type: 'file', accept: 'image/*', onChange: onFile, style: { fontSize: 12 } }),
 					h('span', { style: { fontSize: 12 } }, '透明度'),
-					h('input', { type: 'range', min: 5, max: 100, value: Math.round((cfg.opacity || 0.35) * 100),
-						onChange: (e) => setCfg(Object.assign({}, cfg, { opacity: Number(e.target.value) / 100 })),
-						onMouseUp: (e) => save(Object.assign({}, cfg, { opacity: Number(e.target.value) / 100 })),
-						onTouchEnd: (e) => save(Object.assign({}, cfg, { opacity: Number(e.target.value) / 100 })),
+					h('input', { type: 'range', min: 5, max: 100, value: Math.round((d.opacity || 0.35) * 100),
+						onChange: (e) => setDraft(Object.assign({}, d, { opacity: Number(e.target.value) / 100 })),
 						style: { width: 120 } }),
-					h('span', { style: { fontSize: 12 } }, Math.round((cfg.opacity || 0.35) * 100) + '%')));
+					h('span', { style: { fontSize: 12, minWidth: 34 } }, Math.round((d.opacity || 0.35) * 100) + '%'),
+					h('button', { type: 'button', disabled: busy || !dirty,
+						onClick: save,
+						style: { font: '12.5px/1 inherit', padding: '6px 14px', borderRadius: 7, cursor: dirty ? 'pointer' : 'default',
+							border: '1px solid var(--dsw-alias-brand-primary,#3d8f68)', opacity: dirty ? 1 : 0.55,
+							background: dirty ? 'var(--dsw-alias-brand-primary,#3d8f68)' : 'transparent',
+							color: dirty ? '#fff' : 'var(--dsw-alias-brand-primary,#3d8f68)' } },
+						busy ? '保存中…' : '保存'),
+					d.dataUrl ? h('button', { type: 'button', disabled: busy,
+						onClick: () => setDraft(Object.assign({}, d, { dataUrl: '', enabled: false })),
+						style: { font: '12px/1 inherit', padding: '6px 10px', borderRadius: 7, cursor: 'pointer', border: '1px solid var(--dsw-alias-border-l1,#ccc)', background: 'transparent' } }, '清除图片') : null));
 		}
 
 		function RedteamBgLayer() {
@@ -3087,7 +3110,8 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 			const [rt, setRt] = useState(false);
 			useEffect(() => {
 				fetch('/redteam/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'bgGet' }) })
-					.then((r) => r.json()).then((r) => setCfg({ enabled: !!r.enabled, dataUrl: r.dataUrl || "", opacity: Number(r.opacity) || 0.35 }))
+					.then((r) => r.json())
+					.then((r) => setCfg({ enabled: !!r.enabled, dataUrl: r.dataUrl || '', opacity: Number(r.opacity) || 0.35 }))
 					.catch(() => setCfg({ enabled: false }));
 			}, []);
 			useEffect(() => {
@@ -3096,26 +3120,47 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 				const iv = setInterval(sync, 1500);
 				return () => clearInterval(iv);
 			}, []);
-			/* 红队+启用：把背景图铺到宿主对话滚动容器（[data-conversation-scroll]，宿主原生属性）。
-			   淡化用主题色叠加（dark 叠黑 / light 叠白），透明度滑条控制叠加浓度。 */
 			useEffect(() => {
-				if (!cfg || !rt) return;
-				const apply = () => {
-					try {
-						const el = document.querySelector('[data-conversation-scroll]');
-						if (!el) return;
-						const dark = detectHostTheme() !== 'white';
-						const rgb = dark ? '18,20,24' : '255,252,247';
-						const veil = 1 - (cfg.opacity || 0.35);
-						el.style.backgroundImage = `linear-gradient(rgba(${rgb},${veil.toFixed(2)}),rgba(${rgb},${veil.toFixed(2)})),url(${cfg.dataUrl})`;
-						el.style.backgroundSize = 'cover';
-						el.style.backgroundPosition = 'center';
-						el.style.backgroundAttachment = 'local';
-					} catch { /* ignore */ }
+				if (!cfg || !rt) return undefined;
+				const on = !!cfg.enabled && !!cfg.dataUrl;
+				const attr = 'data-dsh-purge-bg';
+				const paint = (el) => {
+					if (!on) {
+						el.style.backgroundImage = '';
+						el.style.backgroundSize = '';
+						el.style.backgroundPosition = '';
+						el.style.backgroundAttachment = '';
+						el.removeAttribute(attr);
+						return;
+					}
+					const dark = detectHostTheme() !== 'white';
+					const rgb = dark ? '18,20,24' : '255,252,247';
+					const veil = Math.max(0, Math.min(1, 1 - (cfg.opacity || 0.35))).toFixed(2);
+					el.style.backgroundImage = 'linear-gradient(rgba(' + rgb + ',' + veil + '),rgba(' + rgb + ',' + veil + ')),url(' + cfg.dataUrl + ')';
+					el.style.backgroundSize = 'cover,cover';
+					el.style.backgroundPosition = 'center,center';
+					el.style.backgroundAttachment = 'local,local';
+					el.setAttribute(attr, '1');
 				};
-				apply();
-				const iv = setInterval(apply, 2000);   // 容器随会话切换重建，周期性补铺
-				return () => clearInterval(iv);
+				const tick = () => {
+					/* 主锚点：宿主对话滚动容器；退化：主工作区容器 */
+					const targets = [
+						document.querySelector('[data-conversation-scroll]'),
+						document.querySelector('[class*="conversationScroll" i]'),
+						document.querySelector('main'),
+					].filter(Boolean);
+					if (!targets.length) return;
+					for (const el of targets) { try { paint(el); } catch { /* ignore */ } }
+				};
+				tick();
+				const iv = setInterval(tick, 1500);
+				const obs = typeof MutationObserver !== 'undefined' ? new MutationObserver(tick) : null;
+				try { if (obs && document.body) obs.observe(document.body, { childList: true, subtree: true }); } catch { /* ignore */ }
+				return () => {
+					clearInterval(iv);
+					try { obs?.disconnect(); } catch { /* ignore */ }
+					for (const el of document.querySelectorAll('[' + attr + ']')) { try { paint(el); } catch { /* ignore */ } }
+				};
 			}, [cfg, rt]);
 			return null;
 		}
