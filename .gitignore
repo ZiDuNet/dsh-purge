@@ -36,3 +36,4 @@ default-prompt-inject.md
 *.asar
 *.asar.bak
 *.bak
+COMMIT_MSG.txt
