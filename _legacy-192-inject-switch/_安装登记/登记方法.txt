@@ -1,0 +1,27 @@
+﻿=== 插件被宿主加载所必需的三处登记（还原时必须补）===
+
+profile 目录：C:\Users\Administrator\.dsh\profiles\desktop
+
+1) package.json → dependencies 加一行（原始值，仓库已 404，仅作标识用，别真去联网装）：
+   "dsh-purge": "https://codeload.github.com/HunYiSage/dsh-purge/tar.gz/refs/heads/master"
+
+2) package.json → dsh.profile.bundles 数组里必须有 "dsh-purge" 这一项。
+
+3) cordis.patch.yml 末尾插入（当前实际内容，行 101-109）：
+- insert:
+    - id: dsh-purge
+      name: dsh-purge
+      inject: [ systemPrompt, tools ]
+      config:
+        enabled: true
+        stripMnemon: true
+        capabilityProtocol: true
+        hooksDenyBypass: true
+
+4) pnpm-workspace.yaml 需要 allowBuilds，否则 postinstall 被跳：
+   allowBuilds:
+     dsh-purge: true
+
+=== 恢复顺序 ===
+先放插件目录 → 再补上面 1~4 → 再 node --check → 再启动。
+缺 1 或 3，插件不会被加载；缺 4，下次 pnpm 会卡构建审批。

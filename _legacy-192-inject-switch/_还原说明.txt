@@ -1,0 +1,50 @@
+dsh-purge 1.1.92 完整备份（含本机 inject-switch 改造 + 桌面开关程序）
+生成：2026-11-08  原始安装位置：C:\Users\Administrator\.dsh\profiles\desktop\node_modules\dsh-purge
+
+一、这份包是什么
+本机正在运行的 1.1.92 全量安装树，128 个文件，含本机自加的注入总开关：
+- lib/inject-switch.js（开关核心模块）
+- lib/index.js / lib/anchor.js / lib/uninstall.js / bin/dsh-purge.js 的接线
+- _inject-switch/ 下另附桌面开关的 exe 源码与已编译成品
+
+官方 master 基线逐文件比对：除上述 5 个改动与 inject-switch.js 之外，其余 123 个文件与上游逐字节一致。
+
+二、还原步骤（给 AI 看的完整口径）
+1. 完全退出 dsh（托盘退出 + 结束 DeepSeek Harness.exe 全部进程）。
+2. 备份并移除现有插件目录：
+   C:\Users\Administrator\.dsh\profiles\desktop\node_modules\dsh-purge  →  改名为 dsh-purge.old
+3. 解压本包，把 dsh-purge-1.1.92 整个目录复制到上面那个路径，目录名必须是 dsh-purge。
+4. 还原 node_modules/.bin 下的三个 shim（若 profile 需要）：直接用包内 node_modules\.bin 整个覆盖。
+5. 文件数核对应为 128（不含 _inject-switch 与说明文件），然后语法自检：
+   node --check lib\index.js ; node --check lib\anchor.js ; node --check client.js ; node --check bin\dsh-purge.js
+   四条都必须 exit 0。
+6. 校验开关模块能加载：
+   node -e "import('./lib/inject-switch.js').then(m=>console.log(Object.keys(m).join(',')))"
+   应输出 FLAG_NAME,flagPath,isInjectionOff,isInjectionOffCached,primeInjectionState,setInjectionOff,toggleInjection
+7. **补登记**，缺这步插件不会被宿主加载，照 `_安装登记\登记方法.txt` 做 1~4 条。
+8. 启动 dsh，确认：插件面板能开、注入开关能切、/inject status 有输出、/purge status 正常。
+
+开关程序与快捷方式：`_inject-switch\dist\dsh-inject-switch.exe`，
+快捷方式原始在桌面、已一并收进 `_安装登记\dsh 破甲注入开关.lnk`，
+复制回桌面即可（指向 dist 下 exe，路径变了就重建）。
+`_inject-switch\dist\switch.ico` 是它原来的图标。
+
+三、桌面开关程序（可不由 AI 处理）
+_inject-switch\dist\dsh-inject-switch.exe 是已编译成品，可直接放到任意目录双击运行；
+_inject-switch\source\InjectSwitch.cs 是源码，可用 csc 重编。
+它读写 C:\Users\Administrator\.dsh\.inject-off（存在=不注入，不存在=注入），插件每 500ms 热读，
+对下一条消息生效。它不依赖端口，也不依赖 DSH_HOME 环境变量。
+
+四、完整性自证
+包根 SHA256SUMS.txt 是全部 133 个文件的 SHA256，还原后可复核：
+   Get-Content SHA256SUMS.txt | %{ $h,$f = $_ -split '  ',2; if((Get-FileHash $f -Algorithm SHA256).Hash.ToLower() -ne $h){ "BAD $f" } }
+无 BAD 输出即为完整。
+
+五、注意
+- 只备份了插件自身，没备份宿主补丁状态（那份在 D:\DeepSeek-\resources\app 下）。
+- 官方仓库 HunYiSage/dsh-purge 现已 404，profile/package.json 里写的安装地址已失效。
+  保留本包即可长期还原，不必联网。
+- 版本 1.1.92 对宿主 0.2.2-rc.1 有 9 条 drifted（#14 #17 #40 #54 #60 #62 #67 #74 #82），
+  #40 会挡住 Apply。这是版本适配问题，不是本包损坏。需要跑通 Apply 得先上 0.2.2 适配补丁。
+- 若从本包还原后又想装新版本，注意上游包不含 inject-switch，覆盖会把这套开关冲掉，
+  必须保留 lib/inject-switch.js 与那 5 处接线。
