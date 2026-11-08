@@ -1092,6 +1092,13 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 .dshp-tab-btn:hover{color:var(--dsw-alias-label-primary,currentColor)}
 .dshp-tab-btn.on{color:var(--dsw-alias-brand-primary,#6dbf8c)}
 .dshp-tab-btn.on:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;border-radius:2px;background:var(--dsw-alias-brand-primary,#6dbf8c)}
+/* dock UI 优化：页签胶囊化、活跃态、卡片间距 */
+.dshp-dock-tabs{gap:6px;padding:8px 10px 0;background:var(--dsw-alias-bg-layer-1,transparent)}
+.dshp-dock-tab{padding:6px 12px;border-radius:8px 8px 0 0;font-weight:500;transition:background .15s ease,color .15s ease}
+.dshp-dock-tab:hover{color:var(--dsw-alias-label-primary)}
+.dshp-dock-tab.on{font-weight:600;background:var(--dsw-alias-bg-layer-2,rgba(0,0,0,.05))}
+.dshp-dock-head{padding:10px 14px}
+.dshp-dock-body{padding:0}
 /* 页面化 dock：侧栏进入时占满 main 区域，不再是浮动小窗 */
 .dshp-dock-page{border-radius:0 !important;box-shadow:none !important;z-index:auto !important}
 .dshp-dock-page .dshp-dock-head{cursor:default}
@@ -3025,6 +3032,76 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 			return detectHostTheme();
 		}
 
+
+		/* 红队模式对话区背景图：设置卡（上传/URL/透明度/开关）+ 全局背景层 */
+		function RedteamBgCard() {
+			const [cfg, setCfg] = React.useState({ enabled: false, dataUrl: "", opacity: 0.35 });
+			const [loaded, setLoaded] = React.useState(false);
+			const [err, setErr] = React.useState(null);
+			const [msg, setMsg] = React.useState(null);
+			React.useEffect(() => {
+				fetch('/redteam/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'bgGet' }) })
+					.then((r) => r.json()).then((r) => { setCfg({ enabled: !!r.enabled, dataUrl: r.dataUrl || "", opacity: Number(r.opacity) || 0.35 }); setLoaded(true); })
+					.catch((e) => { setErr(String(e.message || e)); setLoaded(true); });
+			}, []);
+			const save = (next) => {
+				setCfg(next); setErr(null); setMsg(null);
+				fetch('/redteam/api', { method: 'POST', headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ op: 'bgSave', enabled: next.enabled, dataUrl: next.dataUrl, opacity: next.opacity }) })
+					.then((r) => r.json()).then((r) => { if (r.ok === false) setErr(r.error || '保存失败'); else setMsg('已保存，刷新后生效'); })
+					.catch((e) => setErr(String(e.message || e)));
+			};
+			const onFile = (e) => {
+				const f = e.target.files && e.target.files[0];
+				if (!f) return;
+				if (f.size > 6 * 1024 * 1024) { setErr('图片超过 6MB，请压缩后再传'); return; }
+				const rd = new FileReader();
+				rd.onload = () => save(Object.assign({}, cfg, { dataUrl: String(rd.result) }));
+				rd.readAsDataURL(f);
+			};
+			if (!loaded) return h('div', { style: { opacity: 0.6, fontSize: 12 } }, '背景图设置加载中…');
+			return h('div', { style: { borderTop: '1px solid var(--dsw-alias-border-l1,#ddd)', marginTop: 14, paddingTop: 12 } },
+				h('h3', { style: { margin: '0 0 6px', fontSize: 13 } }, '🎨 红队模式背景图'),
+				h('div', { style: { fontSize: 12, color: 'var(--dsw-alias-label-secondary,#777)', marginBottom: 8 } },
+					'红队模式会话时给对话区铺自定义背景（半透明）。仅本机保存。'),
+				err ? h('div', { style: { color: '#b91c1c', fontSize: 12, marginBottom: 6 } }, err) : null,
+				msg ? h('div', { style: { color: '#15803d', fontSize: 12, marginBottom: 6 } }, msg) : null,
+				h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' } },
+					h('label', { style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, cursor: 'pointer' } },
+						h('input', { type: 'checkbox', checked: cfg.enabled, onChange: (e) => save(Object.assign({}, cfg, { enabled: e.target.checked })) }),
+						'启用（仅红队模式）'),
+					cfg.dataUrl ? h('img', { src: cfg.dataUrl, alt: '预览', style: { height: 42, borderRadius: 6, border: '1px solid var(--dsw-alias-border-l1,#ddd)' } }) : null),
+				h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 8 } },
+					h('input', { type: 'file', accept: 'image/*', onChange: onFile, style: { fontSize: 12 } }),
+					h('span', { style: { fontSize: 12 } }, '透明度'),
+					h('input', { type: 'range', min: 5, max: 100, value: Math.round((cfg.opacity || 0.35) * 100),
+						onChange: (e) => setCfg(Object.assign({}, cfg, { opacity: Number(e.target.value) / 100 })),
+						onMouseUp: (e) => save(Object.assign({}, cfg, { opacity: Number(e.target.value) / 100 })),
+						onTouchEnd: (e) => save(Object.assign({}, cfg, { opacity: Number(e.target.value) / 100 })),
+						style: { width: 120 } }),
+					h('span', { style: { fontSize: 12 } }, Math.round((cfg.opacity || 0.35) * 100) + '%')));
+		}
+
+		function RedteamBgLayer() {
+			const [cfg, setCfg] = React.useState(null);
+			const [rt, setRt] = useState(false);
+			React.useEffect(() => {
+				fetch('/redteam/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'bgGet' }) })
+					.then((r) => r.json()).then((r) => setCfg({ enabled: !!r.enabled, dataUrl: r.dataUrl || "", opacity: Number(r.opacity) || 0.35 }))
+					.catch(() => setCfg({ enabled: false }));
+			}, []);
+			useEffect(() => {
+				const sync = () => { try { setRt(isRedteamModeActive()); } catch { setRt(false); } };
+				sync();
+				const iv = setInterval(sync, 1500);
+				return () => clearInterval(iv);
+			}, []);
+			if (!cfg || !cfg.enabled || !cfg.dataUrl || !rt) return null;
+			return h('div', { style: { position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
+				backgroundImage: `url(${cfg.dataUrl})`, backgroundSize: 'cover', backgroundPosition: 'center',
+				opacity: cfg.opacity } });
+		}
+
 		function SettingsRoot(props) {
 			useEffect(() => () => stopRestartPolling(), []);
 			const t = typeof props.t === "function" ? props.t : ((key) => key);
@@ -3063,6 +3140,7 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 				h("style", null, PURGE_CSS),
 				h(PurgifySection, null),
 				h(RulesSection, null),
+				h(RedteamBgCard, null),
 			);
 		}
 
@@ -8175,7 +8253,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
      * @param ctx - 客户端根上下文。
      */
     function applyDrillParts() {
-      return { CSS: CSS, Panel: Panel, setUI: setUI, useUI: useUI, isFullWindow: isFullWindow, setDockWidth: setDockWidth };
+      return { CSS: CSS, Panel: Panel, setUI: setUI, useUI: useUI, isFullWindow: isFullWindow, setDockWidth: setDockWidth, KnowledgeTab: KnowledgeTab };
     }
 
     exports.inject = inject
@@ -9005,7 +9083,9 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 			};
 			const body = st.tab === "clean"
 				? h(SettingsRoot, { t })
-				: ((st.tab === "drill" || st.tab === "knowledge") && readDrillAuth() && __dshPurgeDrill.Panel
+				: st.tab === "knowledge" && readDrillAuth() && __dshPurgeDrill.KnowledgeTab
+				? h(__dshPurgeDrill.KnowledgeTab, {})
+				: (readDrillAuth() && __dshPurgeDrill.Panel
 					? h(__dshPurgeDrill.Panel, { embedded: true })
 					: h("div", { style: { padding: 16, color: "var(--dsw-alias-label-secondary)" } }, t("dock.unauthorized")));
 			const panel = h("div", {
@@ -9528,7 +9608,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 				name: "shell.overlay",
 				id: "dsh-purge-dock",
 				order: 50,
-			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeDock), h(TabRowPurgeMount), h(EnvAdaptSendGate), h(RewindDockMount))));
+			}, () => h(react.Fragment, null, h(WelcomeNotice), h(RedteamBgLayer), h(PurgeDock), h(TabRowPurgeMount), h(EnvAdaptSendGate), h(RewindDockMount))));
 			/* 左侧菜单入口（与「对话」等同级页面）：侧栏图标 + main 整页（页面模式，非弹窗） */
 			try {
 				const ShieldIcon = () => h("svg", { viewBox: "0 0 64 64", width: 18, height: 18, "aria-hidden": true, style: { display: "block" } },
