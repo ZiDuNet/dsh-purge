@@ -60,3 +60,13 @@
   - 整体并入 `multi-client/`：WorkBuddy（purge-workbuddy）与 ZCode（purge-zcode）两个宿主插件包 + 5 套预设 + 破甲契约（core/prompt*.md）+ 零依赖 CLI。Node ≥18 标准库，自包含。
   - 形态为并列插件（非本插件 lib 的组成部分）：分别装进对应宿主的插件目录即可生效。
 - 社区版 1.6.84 其余 50+ 模块（update-* 自更新体系、patches/ 引擎重构、25 层自检、事务化回滚）为独立演进线，未全量合并——甄别报告见 `docs/ecosystem-absorb-20261108.md`。上游 YuJunZhiXue/dsh-purge 原仓库已恢复。
+
+## 11. 演练台「知识库」设置项 + 多渠道导入（2026-11-08）
+- **统一位置**：`$DSH_HOME/redteam/knowledge.db`（poc 表 + FTS5 全文索引）+ `pocs/` 落盘——所有渠道都灌到这里，`redteam_poc_search` 直接可查。
+- **演练台新 tab「知识库」**（`lib/redteam/client.js` KnowledgeTab，复用下架时残留的 rt-kb-* 样式）：
+  - 状态卡：库路径/POC 落盘/条目数/已验证数/类型与来源分布/nuclei 模板目录；
+  - 渠道① **ExploitDB 全量**（官方已迁移 `gitlab.com/exploit-database/exploitdb`）：一键 clone→files_exploits.csv 批量入库（事务 + FTS 批量重建 + 9.5 分钟熔断 + 幂等 code=edb-<id>），实测 46,709 条 1 秒入库、重跑 0 重复；支持可选代理；
+  - 渠道② **本机 nuclei 模板**：全模板转 kind=template 条目（source=nuclei-template）；
+  - 检索预览：关键词/CVE/组件即时搜（FTS5）。
+- 后端 `lib/redteam/kb-import.js`（零第三方依赖：git 用 child_process，CSV 引号状态机解析）+ dispatch 补 `kbStatus`/`kbImportExploitdb`/`kbImportNuclei` 三 op。
+- 导入条目 verified=0（线索态）；实战验证后 `redteam_poc_update` 置 verified=1，排序优先。
