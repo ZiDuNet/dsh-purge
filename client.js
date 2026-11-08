@@ -3035,11 +3035,11 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 
 		/* 红队模式对话区背景图：设置卡（上传/URL/透明度/开关）+ 全局背景层 */
 		function RedteamBgCard() {
-			const [cfg, setCfg] = React.useState({ enabled: false, dataUrl: "", opacity: 0.35 });
-			const [loaded, setLoaded] = React.useState(false);
-			const [err, setErr] = React.useState(null);
-			const [msg, setMsg] = React.useState(null);
-			React.useEffect(() => {
+			const [cfg, setCfg] = useState({ enabled: false, dataUrl: "", opacity: 0.35 });
+			const [loaded, setLoaded] = useState(false);
+			const [err, setErr] = useState(null);
+			const [msg, setMsg] = useState(null);
+			useEffect(() => {
 				fetch('/redteam/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'bgGet' }) })
 					.then((r) => r.json()).then((r) => { setCfg({ enabled: !!r.enabled, dataUrl: r.dataUrl || "", opacity: Number(r.opacity) || 0.35 }); setLoaded(true); })
 					.catch((e) => { setErr(String(e.message || e)); setLoaded(true); });
@@ -3083,9 +3083,9 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 		}
 
 		function RedteamBgLayer() {
-			const [cfg, setCfg] = React.useState(null);
+			const [cfg, setCfg] = useState(null);
 			const [rt, setRt] = useState(false);
-			React.useEffect(() => {
+			useEffect(() => {
 				fetch('/redteam/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'bgGet' }) })
 					.then((r) => r.json()).then((r) => setCfg({ enabled: !!r.enabled, dataUrl: r.dataUrl || "", opacity: Number(r.opacity) || 0.35 }))
 					.catch(() => setCfg({ enabled: false }));
@@ -4493,8 +4493,8 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     let dockWidthTag = null
     const setDockWidth = () => {}
     const useUI = () => {
-      const [st, setSt] = React.useState(() => Object.assign({}, ui))
-      React.useEffect(() => {
+      const [st, setSt] = useState(() => Object.assign({}, ui))
+      useEffect(() => {
         const f = (snap) => setSt(Object.assign({}, snap || ui))
         subs.add(f)
         setSt(Object.assign({}, ui))
@@ -4552,10 +4552,10 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     }
     const SHOT_KIND = { screenshot: '现场截图', card: '记录生成的证据摘录' }
     const ShotImage = ({ eng, shot, height }) => {
-      const [zoom, setZoom] = React.useState(false)
+      const [zoom, setZoom] = useState(false)
       const src = shotSrc(eng, shot.id)
       /* 拉图放在 effect 里：render 期间发请求 + 写外部 store 会让同一帧重复触发。 */
-      React.useEffect(() => { if (src === null) loadShot(eng, shot.id) }, [eng, shot.id, src])
+      useEffect(() => { if (src === null) loadShot(eng, shot.id) }, [eng, shot.id, src])
       const card = shot.kind === 'card'
       return h('div', { className: 'rt-shot' },
         src === null
@@ -4706,30 +4706,30 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
       const snapshot = props.snapshot
       const refreshKey = props.refreshKey || 0
       const onRefresh = props.onRefresh
-      const [view, setView] = React.useState('list')
-      const [cidr, setCidr] = React.useState(null)
-      const [q, setQ] = React.useState('')
-      const [qApplied, setQApplied] = React.useState('')
-      const [service, setService] = React.useState('')
-      const [port, setPort] = React.useState('')
-      const [prov, setProv] = React.useState('')
-      const [testStatus, setTestStatus] = React.useState('')
-      const [priority, setPriority] = React.useState('')
-      const [scope, setScope] = React.useState('')
-      const [assetState, setAssetState] = React.useState('')
-      const [sort, setSort] = React.useState('priority')
-      const [showAll, setShowAll] = React.useState(null)
-      const [state, setState] = React.useState({ loading: false, error: null, total: 0, items: [] })
-      const [domains, setDomains] = React.useState(null)
-      const [web, setWeb] = React.useState(null)
-      const [openId, setOpenId] = React.useState(null)
-      const [detail, setDetail] = React.useState(null)
+      const [view, setView] = useState('list')
+      const [cidr, setCidr] = useState(null)
+      const [q, setQ] = useState('')
+      const [qApplied, setQApplied] = useState('')
+      const [service, setService] = useState('')
+      const [port, setPort] = useState('')
+      const [prov, setProv] = useState('')
+      const [testStatus, setTestStatus] = useState('')
+      const [priority, setPriority] = useState('')
+      const [scope, setScope] = useState('')
+      const [assetState, setAssetState] = useState('')
+      const [sort, setSort] = useState('priority')
+      const [showAll, setShowAll] = useState(null)
+      const [state, setState] = useState({ loading: false, error: null, total: 0, items: [] })
+      const [domains, setDomains] = useState(null)
+      const [web, setWeb] = useState(null)
+      const [openId, setOpenId] = useState(null)
+      const [detail, setDetail] = useState(null)
       /* 左侧「外网 C 段 / 内网 C 段」两组各自折叠，状态按靶标记住 */
       const sideCollapse = useCollapse('assets-side:' + eng)
       const seq = React.useRef(0)
       const onData = props.onData
 
-      React.useEffect(() => {
+      useEffect(() => {
         if (!eng) return
         const my = ++seq.current
         setState((s) => Object.assign({}, s, { loading: true, error: null }))
@@ -4753,14 +4753,14 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
         })
       }, [eng, cidr, qApplied, service, port, prov, testStatus, priority, scope, assetState, sort, refreshKey])
 
-      React.useEffect(() => {
+      useEffect(() => {
         if (!eng || view !== 'domain') return
         setDomains(null)
         api({ op: 'domains', engagement: eng, cidr: cidr || undefined })
           .then((r) => setDomains((r && r.items) || []), () => setDomains([]))
       }, [eng, view, cidr, refreshKey])
 
-      React.useEffect(() => {
+      useEffect(() => {
         if (!eng || view !== 'web') return
         setWeb(null)
         api({ op: 'web', engagement: eng, cidr: cidr || undefined })
@@ -5087,11 +5087,11 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     function DiscoveryView(props) {
       const eng = props.engagement
       const refreshKey = props.refreshKey || 0
-      const [data, setData] = React.useState(null)
-      const [err, setErr] = React.useState(null)
-      const [day, setDay] = React.useState('')
+      const [data, setData] = useState(null)
+      const [err, setErr] = useState(null)
+      const [day, setDay] = useState('')
       const seq = useLoadSeq()
-      React.useEffect(() => {
+      useEffect(() => {
         if (!eng) return
         const my = seq.take()
         setData(null)
@@ -5145,14 +5145,14 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     function PromptsTab(props) {
       const eng = props.engagement
       const refreshKey = props.refreshKey || 0
-      const [roles, setRoles] = React.useState([])
-      const [active, setActive] = React.useState(null)
-      const [draft, setDraft] = React.useState('')
-      const [msg, setMsg] = React.useState(null)
-      const [busy, setBusy] = React.useState(false)
+      const [roles, setRoles] = useState([])
+      const [active, setActive] = useState(null)
+      const [draft, setDraft] = useState('')
+      const [msg, setMsg] = useState(null)
+      const [busy, setBusy] = useState(false)
 
       const seq = useLoadSeq()
-      React.useEffect(() => {
+      useEffect(() => {
         /* 无靶标也允许：服务端回内置默认，不再报 engagement required */
         const my = seq.take()
         api(eng ? { op: 'prompts', engagement: eng } : { op: 'prompts' }).then((r) => {
@@ -5164,7 +5164,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
         }, (e) => { if (seq.live(my)) setMsg({ err: String((e && e.message) || e) }) })
       }, [eng, refreshKey])
 
-      React.useEffect(() => {
+      useEffect(() => {
         const r = roles.find((x) => x.role === active)
         if (r) setDraft(r.content || '')
       }, [active, roles])
@@ -5239,15 +5239,15 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     /* ---------------------------------------------------------- 技能库（DSH 原生） */
     function SkillsTab(props) {
       const refreshKey = props.refreshKey || 0
-      const [items, setItems] = React.useState([])
-      const [meta, setMeta] = React.useState({})
-      const [err, setErr] = React.useState(null)
-      const [q, setQ] = React.useState('')
-      const [srcOnly, setSrcOnly] = React.useState(false)
-      const [active, setActive] = React.useState(null)
-      const [detail, setDetail] = React.useState(null)
-      const [busy, setBusy] = React.useState(false)
-      const [brokenOnly, setBrokenOnly] = React.useState(false)
+      const [items, setItems] = useState([])
+      const [meta, setMeta] = useState({})
+      const [err, setErr] = useState(null)
+      const [q, setQ] = useState('')
+      const [srcOnly, setSrcOnly] = useState(false)
+      const [active, setActive] = useState(null)
+      const [detail, setDetail] = useState(null)
+      const [busy, setBusy] = useState(false)
+      const [brokenOnly, setBrokenOnly] = useState(false)
 
       /* refresh=true 跳过后端 30 秒可用性缓存（技能正文/环境变量可能刚改过） */
       const load = (force) => {
@@ -5260,7 +5260,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
           setItems(r.items || [])
         }, (e) => { setBusy(false); setErr(String((e && e.message) || e)) })
       }
-      React.useEffect(load, [refreshKey])
+      useEffect(load, [refreshKey])
 
       const open = (skill) => {
         const name = skill && skill.name
@@ -5499,20 +5499,20 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     function FindingsTab(props) {
       const eng = props.engagement
       const refreshKey = props.refreshKey || 0
-      const [sev, setSev] = React.useState('')
-      const [status, setStatus] = React.useState('')
-      const [q, setQ] = React.useState('')
-      const [qApplied, setQApplied] = React.useState('')
-      const [state, setState] = React.useState({ loading: false, error: null, total: 0, items: [], stats: null })
-      const [creds, setCreds] = React.useState([])
-      const [accesses, setAccesses] = React.useState([])
-      const [files, setFiles] = React.useState([])
-      const [openId, setOpenId] = React.useState(null)
-      const [msg, setMsg] = React.useState(null)
+      const [sev, setSev] = useState('')
+      const [status, setStatus] = useState('')
+      const [q, setQ] = useState('')
+      const [qApplied, setQApplied] = useState('')
+      const [state, setState] = useState({ loading: false, error: null, total: 0, items: [], stats: null })
+      const [creds, setCreds] = useState([])
+      const [accesses, setAccesses] = useState([])
+      const [files, setFiles] = useState([])
+      const [openId, setOpenId] = useState(null)
+      const [msg, setMsg] = useState(null)
       /* 子页签：漏洞 / 凭据 / 访问会话（凭据不再铺在漏洞页底部） */
-      const [subTab, setSubTab] = React.useState('vulns')
+      const [subTab, setSubTab] = useState('vulns')
       /* 默认按目标聚合：322 条平铺没法读，先看"哪台被打下什么" */
-      const [grouped, setGrouped] = React.useState(true)
+      const [grouped, setGrouped] = useState(true)
       const collapse = useCollapse('findings:' + eng)
 
       const load = () => {
@@ -5531,7 +5531,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
         api({ op: 'access', engagement: eng }).then((r) => setAccesses((r && r.items) || []), () => {})
         api({ op: 'attackFiles', engagement: eng }).then((r) => setFiles((r && r.items) || []), () => {})
       }
-      React.useEffect(load, [eng, sev, status, qApplied, refreshKey])
+      useEffect(load, [eng, sev, status, qApplied, refreshKey])
 
       const setVulnStatus = (id, next) => {
         setMsg(null)
@@ -5786,11 +5786,11 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     function ChainTab(props) {
       const eng = props.engagement
       const refreshKey = props.refreshKey || 0
-      const [data, setData] = React.useState(null)
-      const [err, setErr] = React.useState(null)
-      const [loading, setLoading] = React.useState(false)
-      const [view, setView] = React.useState('A')
-      const [openId, setOpenId] = React.useState(null)
+      const [data, setData] = useState(null)
+      const [err, setErr] = useState(null)
+      const [loading, setLoading] = useState(false)
+      const [view, setView] = useState('A')
+      const [openId, setOpenId] = useState(null)
 
       const seq = useLoadSeq()
       const load = () => {
@@ -5804,7 +5804,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
           setErr(null); setData(r)
         }, (e) => { if (!seq.live(my)) return; setLoading(false); setErr(String((e && e.message) || e)) })
       }
-      React.useEffect(load, [eng, refreshKey])
+      useEffect(load, [eng, refreshKey])
 
       const stages = (data && data.stages) || []
       const summary = (data && data.summary) || null
@@ -5994,10 +5994,10 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     function ReportTab(props) {
       const eng = props.engagement
       const refreshKey = props.refreshKey || 0
-      const [data, setData] = React.useState(null)
-      const [err, setErr] = React.useState(null)
-      const [busy, setBusy] = React.useState(false)
-      const [msg, setMsg] = React.useState(null)
+      const [data, setData] = useState(null)
+      const [err, setErr] = useState(null)
+      const [busy, setBusy] = useState(false)
+      const [msg, setMsg] = useState(null)
       /* 报告按阶段折叠：默认全开，折叠状态按靶标记住（阶段多时便于逐段交付） */
       const collapse = useCollapse('report:' + eng)
 
@@ -6024,7 +6024,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
           setBusy(false); setErr(null); setData(r)
         }, (e) => { if (!seq.live(my)) return; setBusy(false); setErr(String((e && e.message) || e)) })
       }
-      React.useEffect(load, [eng, refreshKey])
+      useEffect(load, [eng, refreshKey])
 
       /* 复制结果必须是真实的：clipboard API 失败时（非安全上下文/失焦/被拒）要如实提示，
          否则用户以为复制成功、粘到 Yakit 里是空的。 */
@@ -6224,11 +6224,11 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     function AttackFilesTab(props) {
       const eng = props.engagement
       const refreshKey = props.refreshKey || 0
-      const [folders, setFolders] = React.useState([])
-      const [err, setErr] = React.useState(null)
-      const [busy, setBusy] = React.useState(false)
+      const [folders, setFolders] = useState([])
+      const [err, setErr] = useState(null)
+      const [busy, setBusy] = useState(false)
       const collapse = useCollapse('files:' + eng)
-      const [detail, setDetail] = React.useState(null)
+      const [detail, setDetail] = useState(null)
 
       const seq = useLoadSeq()
       const load = () => {
@@ -6243,7 +6243,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
           setFolders(r.items || [])
         }, (e) => { if (!seq.live(my)) return; setBusy(false); setErr(String((e && e.message) || e)) })
       }
-      React.useEffect(load, [eng, refreshKey])
+      useEffect(load, [eng, refreshKey])
 
       const openFile = (f) => {
         if (detail && detail.id === f.id) { setDetail(null); return }
@@ -6310,21 +6310,21 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 
     function KnowledgeTab(props) {
       const refreshKey = props.refreshKey || 0
-      const [data, setData] = React.useState(null)
-      const [err, setErr] = React.useState(null)
-      const [busy, setBusy] = React.useState(false)
-      const [msg, setMsg] = React.useState(null)
-      const [q, setQ] = React.useState('')
-      const [kind, setKind] = React.useState('')
-      const [category, setCategory] = React.useState('')
-      const [engagement, setEngagement] = React.useState('')
-      const [assetTarget, setAssetTarget] = React.useState('')
-      const [grouped, setGrouped] = React.useState(true)
-      const [verifiedOnly, setVerifiedOnly] = React.useState(false)
-      const [openId, setOpenId] = React.useState(null)
-      const [detail, setDetail] = React.useState(null)
-      const [detailBusy, setDetailBusy] = React.useState(false)
-      const [tplOffset, setTplOffset] = React.useState(0)
+      const [data, setData] = useState(null)
+      const [err, setErr] = useState(null)
+      const [busy, setBusy] = useState(false)
+      const [msg, setMsg] = useState(null)
+      const [q, setQ] = useState('')
+      const [kind, setKind] = useState('')
+      const [category, setCategory] = useState('')
+      const [engagement, setEngagement] = useState('')
+      const [assetTarget, setAssetTarget] = useState('')
+      const [grouped, setGrouped] = useState(true)
+      const [verifiedOnly, setVerifiedOnly] = useState(false)
+      const [openId, setOpenId] = useState(null)
+      const [detail, setDetail] = useState(null)
+      const [detailBusy, setDetailBusy] = useState(false)
+      const [tplOffset, setTplOffset] = useState(0)
       const tplPageSize = 40
 
       const query = (over) => {
@@ -6349,7 +6349,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
         }, (e) => { setBusy(false); setErr(String((e && e.message) || e)) })
       }
       /* 首次进入与刷新键变化时拉全量（检索是显式动作，避免边打字边打接口） */
-      React.useEffect(() => { query({ q: undefined, kind: undefined, category: undefined, engagement: undefined, asset_target: undefined, verified: undefined }) }, [refreshKey])
+      useEffect(() => { query({ q: undefined, kind: undefined, category: undefined, engagement: undefined, asset_target: undefined, verified: undefined }) }, [refreshKey])
 
       const open = (id) => {
         if (openId === id) { setOpenId(null); setDetail(null); return }
@@ -6582,18 +6582,18 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     /* ===== 知识库设置项：统一位置 + 多渠道导入 + 检索预览 ===== */
     function KnowledgeTab(props) {
       const refreshKey = props.refreshKey || 0
-      const [status, setStatus] = React.useState(null)
-      const [err, setErr] = React.useState(null)
-      const [msg, setMsg] = React.useState(null)
-      const [busy, setBusy] = React.useState('')
-      const [proxy, setProxy] = React.useState('')
-      const [q, setQ] = React.useState('')
-      const [hits, setHits] = React.useState(null)
+      const [status, setStatus] = useState(null)
+      const [err, setErr] = useState(null)
+      const [msg, setMsg] = useState(null)
+      const [busy, setBusy] = useState('')
+      const [proxy, setProxy] = useState('')
+      const [q, setQ] = useState('')
+      const [hits, setHits] = useState(null)
 
       const loadStatus = React.useCallback(() => {
         api({ op: 'kbStatus' }).then((r) => setStatus(r)).catch((e) => setErr(String(e.message || e)))
       }, [])
-      React.useEffect(() => { loadStatus() }, [loadStatus, refreshKey])
+      useEffect(() => { loadStatus() }, [loadStatus, refreshKey])
 
       const runImport = (channel) => {
         setBusy(channel); setErr(null); setMsg(null)
@@ -6680,12 +6680,12 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 
     function EnvTab(props) {
       const refreshKey = props.refreshKey || 0
-      const [data, setData] = React.useState(null)
-      const [draft, setDraft] = React.useState(null)
-      const [err, setErr] = React.useState(null)
-      const [msg, setMsg] = React.useState(null)
-      const [busy, setBusy] = React.useState(false)
-      const [folderPath, setFolderPath] = React.useState('')
+      const [data, setData] = useState(null)
+      const [draft, setDraft] = useState(null)
+      const [err, setErr] = useState(null)
+      const [msg, setMsg] = useState(null)
+      const [busy, setBusy] = useState(false)
+      const [folderPath, setFolderPath] = useState('')
 
       const applyDraftFrom = (r) => {
         const c = (r && r.config) || {}
@@ -6710,7 +6710,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
           applyDraftFrom(r)
         }, (e) => { setBusy(false); setErr(String((e && e.message) || e)) })
       }
-      React.useEffect(load, [refreshKey])
+      useEffect(load, [refreshKey])
 
       const save = () => {
         if (!draft) return
@@ -6882,12 +6882,12 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     function ScoreTab(props) {
       const eng = props.engagement
       const refreshKey = props.refreshKey || 0
-      const [data, setData] = React.useState(null)
-      const [err, setErr] = React.useState(null)
-      const [busy, setBusy] = React.useState(false)
-      const [openId, setOpenId] = React.useState(null)
-      const [form, setForm] = React.useState(null)
-      const [msg, setMsg] = React.useState(null)
+      const [data, setData] = useState(null)
+      const [err, setErr] = useState(null)
+      const [busy, setBusy] = useState(false)
+      const [openId, setOpenId] = useState(null)
+      const [form, setForm] = useState(null)
+      const [msg, setMsg] = useState(null)
 
       const seq = useLoadSeq()
       const load = () => {
@@ -6902,7 +6902,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
           setData(r)
         }, (e) => { if (!seq.live(my)) return; setBusy(false); setErr(String((e && e.message) || e)) })
       }
-      React.useEffect(load, [eng, refreshKey])
+      useEffect(load, [eng, refreshKey])
 
       /* builtin 要一路带到表单：内置得分点的分值/名称/口径由《得分规则》锁定，
          界面必须把输入框置灰并说明原因 —— 以前是「能改、提示已保存、刷新后变回去」，
@@ -7164,8 +7164,8 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 
     /** 一个页签一个 hook：isOpen(key, defaultOpen) / toggle(key, defaultOpen) / setAll(keys, open) */
     function useCollapse(prefix) {
-      const [state, setState] = React.useState(() => collapseLoad(prefix))
-      React.useEffect(() => { setState(collapseLoad(prefix)) }, [prefix])
+      const [state, setState] = useState(() => collapseLoad(prefix))
+      useEffect(() => { setState(collapseLoad(prefix)) }, [prefix])
       const write = (next) => { collapseSave(prefix, next); setState(next) }
       const isOpen = (key, defaultOpen) => {
         const v = state[key]
@@ -7211,7 +7211,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 
     /** 长文本折叠（L3）：固定预览高度 + 渐隐 + 展开/复制。 */
     function Clip(props) {
-      const [open, setOpen] = React.useState(false)
+      const [open, setOpen] = useState(false)
       const text = String(props.text === undefined || props.text === null ? '' : props.text)
       if (text.trim() === '') return null
       return h('div', { className: 'rt-clip' + (open ? ' open' : '') },
@@ -7242,10 +7242,10 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     function TestingTab(props) {
       const eng = props.engagement
       const refreshKey = props.refreshKey || 0
-      const [data, setData] = React.useState(null)
-      const [err, setErr] = React.useState(null)
-      const [at, setAt] = React.useState(null)
-      const [auto, setAuto] = React.useState(true)
+      const [data, setData] = useState(null)
+      const [err, setErr] = useState(null)
+      const [at, setAt] = useState(null)
+      const [auto, setAuto] = useState(true)
       /* 折叠状态按「页签 + 靶标」记忆；正在测永远常显，不参与折叠 */
       const collapse = useCollapse('testing:' + eng)
 
@@ -7266,8 +7266,8 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
       }
       /* 切靶标/刷新时把在途标记复位：旧请求的 finally 因序号不符不会清，
          不复位的话这里会永久早退，5 秒轮询也全空转。 */
-      React.useEffect(() => { seq.current += 1; inflight.current = false; load() }, [eng, refreshKey])
-      React.useEffect(() => {
+      useEffect(() => { seq.current += 1; inflight.current = false; load() }, [eng, refreshKey])
+      useEffect(() => {
         if (!eng || !auto) return undefined
         const timer = setInterval(load, 5000)
         return () => clearInterval(timer)
@@ -7382,11 +7382,11 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     function SessionTab(props) {
       const eng = props.engagement
       const refreshKey = props.refreshKey || 0
-      const [data, setData] = React.useState(null)
-      const [err, setErr] = React.useState(null)
-      const [busy, setBusy] = React.useState(false)
-      const [msg, setMsg] = React.useState(null)
-      const [copied, setCopied] = React.useState(null)
+      const [data, setData] = useState(null)
+      const [err, setErr] = useState(null)
+      const [busy, setBusy] = useState(false)
+      const [msg, setMsg] = useState(null)
+      const [copied, setCopied] = useState(null)
 
       const seq = useLoadSeq()
       const load = () => {
@@ -7399,7 +7399,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
           setData(r)
         }, (e) => { if (seq.live(my)) setErr(String((e && e.message) || e)) })
       }
-      React.useEffect(load, [eng, refreshKey])
+      useEffect(load, [eng, refreshKey])
 
       const probe = () => {
         setBusy(true); setMsg(null)
@@ -7627,10 +7627,10 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     function AgentsTab(props) {
       const eng = props.engagement
       const refreshKey = props.refreshKey || 0
-      const [roles, setRoles] = React.useState(null)
-      const [err, setErr] = React.useState(null)
-      const [concurrency, setConcurrency] = React.useState(null)
-      const [busy, setBusy] = React.useState(false)
+      const [roles, setRoles] = useState(null)
+      const [err, setErr] = useState(null)
+      const [concurrency, setConcurrency] = useState(null)
+      const [busy, setBusy] = useState(false)
 
       const seq = useLoadSeq()
       const load = () => {
@@ -7649,7 +7649,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
           if (r && r.ok !== false) setConcurrency(r)
         }, () => {})
       }
-      React.useEffect(load, [eng, refreshKey])
+      useEffect(load, [eng, refreshKey])
 
       const used = concurrency ? concurrency.used : null
       const max = concurrency ? concurrency.max : 3
@@ -7691,10 +7691,10 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 
     function ConcurrencyCard(props) {
       const info = props.concurrency || {}
-      const [draft, setDraft] = React.useState('')
-      const [busy, setBusy] = React.useState(false)
-      const [msg, setMsg] = React.useState(null)
-      React.useEffect(() => { if (info.max) setDraft(String(info.max)) }, [info.max])
+      const [draft, setDraft] = useState('')
+      const [busy, setBusy] = useState(false)
+      const [msg, setMsg] = useState(null)
+      useEffect(() => { if (info.max) setDraft(String(info.max)) }, [info.max])
 
       const limit = info.limit || 10
       const used = typeof info.used === 'number' ? info.used : null
@@ -7742,12 +7742,12 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
      * 确认后由 host 侧执行 安装 → 重启 dsh web（页面会断开，重启后刷新即可）。
      */
     function VersionBar(props) {
-      const [info, setInfo] = React.useState(null)
-      const [err, setErr] = React.useState(null)
-      const [busy, setBusy] = React.useState(false)
-      const [open, setOpen] = React.useState(false)
-      const [msg, setMsg] = React.useState(null)
-      const [countdown, setCountdown] = React.useState(0)
+      const [info, setInfo] = useState(null)
+      const [err, setErr] = useState(null)
+      const [busy, setBusy] = useState(false)
+      const [open, setOpen] = useState(false)
+      const [msg, setMsg] = useState(null)
+      const [countdown, setCountdown] = useState(0)
 
       const check = (silent) => {
         if (!silent) setBusy(true)
@@ -7767,7 +7767,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
           api({ op: 'version' }).then((v) => { if (v && v.ok !== false) setInfo(v) }, () => {})
         })
       }
-      React.useEffect(() => { check(true) }, [])
+      useEffect(() => { check(true) }, [])
 
       const apply = () => {
         setBusy(true)
@@ -7910,22 +7910,22 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
       /* embedded：嵌在 dsh-purge 外层 dock 里时，不再自带收起/全面浏览/拖拽条，避免与外层按钮重叠 */
       const embedded = !!(props && props.embedded)
       const st = useUI()
-      const [engagements, setEngagements] = React.useState([])
-      const [eng, setEng] = React.useState(null)
-      const [snapshot, setSnapshot] = React.useState(null)
-      const [err, setErr] = React.useState(null)
-      const [newName, setNewName] = React.useState('')
-      const [geom, setGeom] = React.useState(loadRtGeom)
-      const [creating, setCreating] = React.useState(false)
-      const [refreshKey, setRefreshKey] = React.useState(0)
-      const [digest, setDigest] = React.useState(null)
-      const [seen, setSeen] = React.useState(null)
+      const [engagements, setEngagements] = useState([])
+      const [eng, setEng] = useState(null)
+      const [snapshot, setSnapshot] = useState(null)
+      const [err, setErr] = useState(null)
+      const [newName, setNewName] = useState('')
+      const [geom, setGeom] = useState(loadRtGeom)
+      const [creating, setCreating] = useState(false)
+      const [refreshKey, setRefreshKey] = useState(0)
+      const [digest, setDigest] = useState(null)
+      const [seen, setSeen] = useState(null)
 
-      React.useEffect(() => {
+      useEffect(() => {
         if (embedded) return undefined
         try { window.localStorage.setItem(RT_GEOM_KEY, JSON.stringify(geom)) } catch (e) { /* 隐私模式 */ }
       }, [geom, embedded])
-      React.useEffect(() => {
+      useEffect(() => {
         if (embedded) return undefined
         const onResize = () => setGeom((g) => clampRtGeom(g))
         window.addEventListener('resize', onResize)
@@ -7948,7 +7948,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
         }, () => {})
       }
 
-      React.useEffect(() => {
+      useEffect(() => {
         api({ op: 'bootstrap' }).then((r) => {
           if (!r || r.ok === false) { setErr((r && r.error) || '无法连接资产库'); return }
           setEngagements(r.engagements || [])
@@ -8025,7 +8025,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
       }
 
       /* 切靶标：重新读该靶标的未读快照，并立刻取一次摘要 */
-      React.useEffect(() => {
+      useEffect(() => {
         if (!eng) { setDigest(null); setSeen(null); return undefined }
         setSeen(loadUnread(eng))
         let alive = true
@@ -8089,7 +8089,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
           }
         } catch (e) { /* ignore */ }
       }
-      React.useEffect(() => {
+      useEffect(() => {
         if (!full) return undefined
         const onKey = (e) => { if (e.key === 'Escape') exitFull() }
         window.addEventListener('keydown', onKey)
