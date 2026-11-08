@@ -8306,6 +8306,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 
 		/* 侧栏「破甲控制台」整页渲染：复用 dock 页签与 body，占满 main（页面模式，非弹窗） */
 		function PurgeDockPage() {
+			const t = useT();
 			const st = useDock();
 			const pageSt = Object.assign({}, st, { pageMode: true, open: true });
 			const body = pageSt.tab === "clean"
