@@ -1,6 +1,7 @@
 window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 
 		var module = { exports: {} };
+		let purgeCtxRef = null;
 		var exports = module.exports;
 		Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
 		let react = require("react");
@@ -8305,10 +8306,19 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 		}
 
 		/* 侧栏「破甲控制台」整页渲染：复用 dock 页签与 body，占满 main（页面模式，非弹窗） */
+		function purgeCtx() {
+			/* 宿主跨插件面板控制面（ctx.layout，dsh-client-ui-layout reflect.provide("layout")）。 */
+			try { if (purgeCtxRef && purgeCtxRef.layout && purgeCtxRef.layout.selectPanel) return purgeCtxRef; } catch { /* ignore */ }
+			return null;
+		}
 		function PurgeDockPage() {
-			/* 侧栏入口定稿：无占位页——main 渲染 null，仅拉起浮窗（回对话点侧栏会话项）。 */
+			/* 侧栏入口定稿：无占位页——弹浮窗 + 官方 selectPanel(null) 回对话视图。 */
 			setTimeout(() => {
 				try { setDock({ open: true, tab: "drill", authOpen: false, pageMode: false, pending: "tab" }); } catch { /* ignore */ }
+				try {
+					const c = purgeCtx();
+					if (c) c.layout.selectPanel(null);
+				} catch { /* layout 不可用时保持现状（main 空白） */ }
 			}, 0);
 			return null;
 		}
@@ -9504,6 +9514,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 		}
 
 		function apply(ctx) {
+			try { purgeCtxRef = ctx; } catch { /* ignore */ }
 			if (ctx.uiConversation && ctx.uiConversation.events && typeof ctx.uiConversation.events.register === "function") {
 				ctx.uiConversation.events.register(purgeCommandInputDefinition);
 				ctx.slots.inject("conversation.chat.node", () => ctx.slots.register({
