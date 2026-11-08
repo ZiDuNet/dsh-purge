@@ -35,3 +35,9 @@
 ## 7. 知识库复活（lib/redteam/tools.js + store-core.js）
 - 原版在 MCP 工具层（tools.js 6 处 `return KB_DISABLED`）与面板 API 路由层（store-core.js pocSearch/pocList/pocGet/pocSave/pocUpdate/pocDelete/pocUse/pocStats 八操作短路）把知识库整体下架，返回「开源版已下架知识库」——但全部真实实现（SQLite poc 表 + FTS5 全文索引 + 落盘 pocs/ 目录 + markPocUsed 复用记账）一直都在包里，README 也声称开源版含知识库。
 - 处置：删除 6 处短路 return（真实实现复活）；路由层删除短路块并补 8 个分发分支接回 store 真实方法。空库起步：条目靠 redteam_poc_add 回填（来源本机 nuclei 模板命中 + 实战录入），即 release-notes 所述「运行时生成的本地数据库」。
+
+## 8. 知识库演进路线（规划）
+- **当前（过渡态）**：本地 SQLite 知识库（poc 表 + FTS5 全文索引 + pocs/ 落盘 + markPocUsed 复用记账），见第 7 项。空库起步，条目靠 `redteam_poc_add` 回填积累。
+- **后期目标**：替换为**线上 RAG 知识库**——POC/EXP 正文向量化检索（语义匹配代替 FTS 关键词），多机共享弹药库（各靶标实战回填统一沉淀），按「verified → 复用次数 → 向量相似度」排序。
+- **改造点（到时改这三处即可）**：`lib/redteam/tools.js` 六个 `redteam_poc_*` 工具的 execute（当前直调 store）；`lib/redteam/store-core.js` 的 `searchPocs`/`savePoc`/`getPoc`/`updatePoc`/`deletePoc`/`markPocUsed`（换成 RAG API 客户端，接口语义保持）；面板路由层第 7 项的 8 个 op 分发（透传到 RAG 后端）。工具 schema 不用动，智能体侧无感切换。
+- 预留：`redteam_poc_search` 的返回结构保持 `{results:[...], count}`，RAG 版按相似度字段补 `score` 即可。
