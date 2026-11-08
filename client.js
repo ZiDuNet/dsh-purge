@@ -132,7 +132,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"dock.toggle": "dsh-purge",
 			"dock.newSession": "🛡 破甲控制台",
 			"dock.knowledge": "📚 知识库",
-			"dock.inSession": "🎯 演练台",
+			"dock.inSession": "破甲控制台",
 			"dock.redteam": "红队模式",
 			"dock.full": "全面浏览",
 			"dock.close": "收起",
@@ -494,7 +494,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"dock.toggle": "dsh-purge",
 			"dock.newSession": "🛡 破甲控制台",
 			"dock.knowledge": "📚 Knowledge",
-			"dock.inSession": "🎯 演练台",
+			"dock.inSession": "破甲控制台",
 			"dock.redteam": "Red team",
 			"dock.full": "Full view",
 			"dock.close": "Collapse",
@@ -9544,7 +9544,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 					name: "sidebar.panellist",
 					id: "dsh-purge-console",
 					order: 300,
-					label: () => "🛡 破甲控制台",
+					label: () => "破甲控制台",
 				}, ShieldIcon));
 				ctx.slots.inject("main", () => ctx.slots.register({ name: "main", key: "dsh-purge-console" }, PurgeDockPage));
 			} catch (e) { try { console.warn("[dsh-purge] sidebar/main slots skipped:", e); } catch { /* ignore */ } }
