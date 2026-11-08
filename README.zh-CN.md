@@ -7,6 +7,25 @@
 > **已拆除全部源代码围栏**（区域拦截闸、知识库下架短路、官方身份/审批/沙箱围栏一并清除）。
 > 更新与发布全部走本仓库：`ZiDuNet/dsh-purge`。以下内容为原作者的原说明，整体降级存档。
 
+
+## 📌 本仓库更新说明（维护版）
+
+> 本节由维护方持续更新；再往下是原作者的「原说明」存档。
+
+| 版本 | 日期 | 变更 |
+|---|---|---|
+| `1.1.93-m5` | 2026-11-08 | README 重构：中文为默认，原说明降级存档，英文原版移入 `README.md.en-archive` |
+| `1.1.93-m4` | 2026-11-08 | 吸收生态两强：拒绝重试三件套（默认关，`tuning.json` 开启）+ WorkBuddy/ZCode 多客户端插件包（`multi-client/`） |
+| `1.1.93-m3` | 2026-11-08 | 吸收 yaklang 组织：`hack-skills` 103 攻击 playbook + `yak-skills` 12 引擎技能 + `vuldb-pipeline` 数据管道 |
+| `1.1.93-m2` | 2026-11-08 | 复活知识库（拆 MCP 层与路由层短路）+ 出厂槽重封（自证口令「破甲自检」） |
+| `1.1.93-m1` | 2026-11-08 | 维护版基线：1.1.93 + 区域闸拆除 + allowlist + `purge selfcheck` + 镜像注入段 + 更新地址迁移 ZiDuNet |
+
+- **完整变更记录**：[LOCAL-CHANGES.md](LOCAL-CHANGES.md)（含每项修改的技术细节与未合入决策）
+- **更新获取**：`git pull` 本仓库 / Releases；插件内自动检查更新已指向 `ZiDuNet/dsh-purge`
+- **候选池**：[docs/ecosystem-absorb-20261108.md](docs/ecosystem-absorb-20261108.md)（社区版 25 层自检对照、apply 事务化回滚等后续移植计划）
+
+---
+
 <h1 align="center">⚔️ DeepSeek Harness 网络安全红队工具（dsh-purge）</h1>
 
 <p align="center"><strong>Version 1.1.93</strong></p>
