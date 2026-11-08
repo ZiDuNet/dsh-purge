@@ -9217,7 +9217,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 					clearInterval(iv);
 				};
 			}, []);
-			if (!host || !rtMode) return null;
+			if (!host) return null;
 			const btn = h("button", {
 				type: "button",
 				className: "dshp-hero-chip-btn" + (st.open ? " on" : ""),
