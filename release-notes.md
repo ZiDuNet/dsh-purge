@@ -1,4 +1,21 @@
-# 1.1.94
+# 1.1.95
+
+## 中文
+
+- 版本 **1.1.95**。
+- **新增**：官方「设置 → 插件」页里挂本插件自己的页签（`settings.plugins.tab`）——显示当前版本、更新来源，提供「检测更新」「更新到 x.y.z」按钮，与其它插件的设置入口形态一致。
+- **修复**：更新通道稳定版 ref 从 `master` 改为 `main`（本仓库默认分支），否则「检测更新」永远读不到远端（实测确认：`hasRemote: true`）。
+- **修复**：设置页签与后端 `/dsh-purge/update` 的请求字段对齐（`op` 而非 `action`），检测结果按 `lanes.stable.latestRef` / `hasUpdate` 解析。
+- **CI**：全量 JS 语法检查、manifest 与版本一致性校验（含 `lib/update.js` 的 REPO 必须指向本仓库）、Release 附带 `SHA256SUMS-<version>.txt`。
+
+## English
+
+- **1.1.95**.
+- New: a per-plugin tab in the official Settings → Plugins page (`settings.plugins.tab`) showing the current version and update source, with Check update / Update buttons — matching the settings entry style of other plugins.
+- Fix: the stable update lane now tracks `main` instead of `master` (this repo's default branch); previously Check update could never read the remote.
+- Fix: the tab now matches the `/dsh-purge/update` contract (`op` instead of `action`) and parses `lanes.stable.latestRef` / `hasUpdate`.
+- CI: full-tree JS syntax check, manifest/version consistency (including the `lib/update.js` REPO), and a per-release `SHA256SUMS-<version>.txt` asset.
+
 
 ## 中文
 

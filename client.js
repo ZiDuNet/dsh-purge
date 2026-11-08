@@ -3033,6 +3033,94 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 		}
 
 
+
+		/* 官方「插件」设置页里的 dsh-purge 页签：版本信息 + 检测更新 + 更新。
+		   走宿主标准 slot settings.plugins.tab，与其它插件的设置页形态一致。 */
+		function PurgeUpdateTab() {
+			const [state, setState] = useState(null);
+			const [checking, setChecking] = useState(false);
+			const [updating, setUpdating] = useState(false);
+			const [msg, setMsg] = useState(null);
+			const [err, setErr] = useState(null);
+			const [remote, setRemote] = useState(null);
+
+			const post = (path, body, timeoutMs) => {
+				const ctrl = new AbortController();
+				const timer = setTimeout(() => ctrl.abort(), timeoutMs || 60000);
+				return fetch(path, {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify(body || {}),
+					signal: ctrl.signal,
+				}).then((r) => r.text().then((x) => {
+					let j = null;
+					try { j = x ? JSON.parse(x) : null; } catch { throw new Error(r.status + ' 非 JSON 响应'); }
+					if (!r.ok) throw new Error((j && j.error) || (r.status + ' ' + r.statusText));
+					return j;
+				})).finally(() => clearTimeout(timer));
+			};
+
+			useEffect(() => {
+				fetch('/dsh-purge/update', { method: 'GET' })
+					.then((r) => r.json())
+					.then((r) => setState(r))
+					.catch(() => { /* 老宿主无该接口时留空 */ });
+			}, []);
+
+			const localVersion = (state && (state.localVersion || state.plugin_version)) || '';
+			const doCheck = () => {
+				setChecking(true); setErr(null); setMsg(null);
+				post('/dsh-purge/update', { op: 'check' }, 45000)
+					.then((r) => {
+						setState((prev) => Object.assign({}, prev, r));
+						const lane = (r && r.lanes && r.lanes.stable) || {};
+						const latest = lane.latestRef || r.remoteVersion || r.latest || '';
+						const has = r.hasUpdate === true || Boolean(lane.hasUpdate);
+						setRemote(has && latest ? latest : null);
+						if (!has) setMsg('已是最新' + (localVersion ? '（' + localVersion + '）' : ''));
+						else setMsg('发现新版本 ' + latest + '，当前 ' + (localVersion || '未知'));
+					})
+					.catch((e) => setErr(String(e.message || e)))
+					.finally(() => setChecking(false));
+			};
+			const doUpdate = () => {
+				setUpdating(true); setErr(null); setMsg('正在下载并安装，完成后宿主会自动重启…');
+				post('/dsh-purge/update', { op: 'apply', ref: remote || undefined }, 180000)
+					.then((r) => {
+						if (r && r.ok === false) { setErr(r.error || '更新失败'); return; }
+						setMsg('更新完成，正在重启宿主…');
+					})
+					.catch((e) => setErr(String(e.message || e)))
+					.finally(() => setUpdating(false));
+			};
+
+			const hasUpdate = !!remote;
+			return h('div', { style: { display: 'flex', flexDirection: 'column', gap: 14, padding: '4px 2px', maxWidth: 720 } },
+				h('div', null,
+					h('h3', { style: { margin: '0 0 6px', fontSize: 14 } }, '版本与更新'),
+					h('div', { style: { fontSize: 12.5, color: 'var(--dsw-alias-label-secondary)', lineHeight: 1.7 } },
+						h('div', null, '当前版本：', h('b', null, localVersion || '读取中…')),
+						h('div', null, '更新来源：', h('code', { style: { fontSize: 11.5 } }, 'ZiDuNet/dsh-purge'))),
+				),
+				msg ? h('div', { style: { fontSize: 12.5, color: '#15803d' } }, msg) : null,
+				err ? h('div', { style: { fontSize: 12.5, color: '#b91c1c' } }, '✗ ' + err) : null,
+				h('div', { style: { display: 'flex', gap: 8 } },
+					h('button', { type: 'button', disabled: checking || updating, onClick: doCheck,
+						style: { font: '12.5px/1 inherit', padding: '7px 16px', borderRadius: 7, cursor: checking ? 'default' : 'pointer',
+							border: '1px solid var(--dsw-alias-brand-primary,#3d8f68)', background: 'transparent',
+							color: 'var(--dsw-alias-brand-primary,#3d8f68)', opacity: checking ? 0.6 : 1 } },
+						checking ? '检测中…' : '检测更新'),
+					hasUpdate ? h('button', { type: 'button', disabled: updating, onClick: doUpdate,
+						style: { font: '12.5px/1 inherit', padding: '7px 16px', borderRadius: 7, cursor: updating ? 'default' : 'pointer',
+							border: '1px solid var(--dsw-alias-brand-primary,#3d8f68)', background: 'var(--dsw-alias-brand-primary,#3d8f68)',
+							color: '#fff', opacity: updating ? 0.6 : 1 } },
+						updating ? '更新中…' : '更新到 ' + remote) : null),
+				h('div', { style: { fontSize: 11.5, color: 'var(--dsw-alias-label-secondary)', lineHeight: 1.7, borderTop: '1px solid var(--dsw-alias-border-l1)', paddingTop: 10 } },
+					'提示：更新会覆盖插件目录后重启宿主；会话与靶标数据保存在 $DSH_HOME，不受影响。',
+					h('br'), '手动更新：',
+					h('code', { style: { fontSize: 11 } }, 'git -C <插件目录> pull && sudo systemctl restart dsh-web')));
+		}
+
 		function SettingsRoot(props) {
 			useEffect(() => () => stopRestartPolling(), []);
 			const t = typeof props.t === "function" ? props.t : ((key) => key);
@@ -9556,6 +9644,15 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 				}, ShieldIcon));
 				ctx.slots.inject("main", () => ctx.slots.register({ name: "main", key: "dsh-purge-console" }, PurgeDockPage));
 			} catch (e) { try { console.warn("[dsh-purge] sidebar/main slots skipped:", e); } catch { /* ignore */ } }
+			/* 官方「插件」设置页里挂本插件自己的页签（与其它插件一致的设置入口形态）。 */
+			try {
+				ctx.slots.inject("settings.plugins.tab", () => ctx.slots.register({
+					name: "settings.plugins.tab",
+					id: "dsh-purge",
+					order: 60,
+					label: () => "破甲控制台",
+				}, PurgeUpdateTab));
+			} catch (e) { try { console.warn("[dsh-purge] settings.plugins.tab skipped:", e); } catch { /* ignore */ } }
 			try {
 				if (typeof ctx.inject === "function") {
 					ctx.inject(["sessions", "uiWorkspace", "workspaces", "conversation"], (host) => installRewindUi(host));
