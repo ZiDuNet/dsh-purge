@@ -9525,7 +9525,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 				name: "shell.overlay",
 				id: "dsh-purge-dock",
 				order: 50,
-			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeDock), h(HeroNewSessionMount), h(TabRowPurgeMount), h(EnvAdaptSendGate), h(RewindDockMount))));
+			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeDock), h(EnvAdaptSendGate), h(RewindDockMount))));
 			/* 左侧菜单入口（与「对话」等同级页面）：侧栏图标 + main 整页（页面模式，非弹窗） */
 			try {
 				const ShieldIcon = () => h("svg", { viewBox: "0 0 64 64", width: 18, height: 18, "aria-hidden": true, style: { display: "block" } },
