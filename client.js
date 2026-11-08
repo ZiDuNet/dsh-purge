@@ -8315,7 +8315,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
      * @param ctx - 客户端根上下文。
      */
     function applyDrillParts() {
-      return { CSS: CSS, Panel: Panel, setUI: setUI, useUI: useUI, isFullWindow: isFullWindow, setDockWidth: setDockWidth };
+      return { CSS: CSS, Panel: Panel, KnowledgeTab: KnowledgeTab, setUI: setUI, useUI: useUI, isFullWindow: isFullWindow, setDockWidth: setDockWidth };
     }
 
     exports.inject = inject
