@@ -70,3 +70,11 @@
   - 检索预览：关键词/CVE/组件即时搜（FTS5）。
 - 后端 `lib/redteam/kb-import.js`（零第三方依赖：git 用 child_process，CSV 引号状态机解析）+ dispatch 补 `kbStatus`/`kbImportExploitdb`/`kbImportNuclei` 三 op。
 - 导入条目 verified=0（线索态）；实战验证后 `redteam_poc_update` 置 verified=1，排序优先。
+
+## 12. 演练台产品化 + 数据库规范化（2026-11-08）
+- **演练台 UI 产品化**（`lib/redteam/client.js`）：
+  - 面板头部：「红队演练台」+ 副标「攻防演练作战平台」（悬停可见全流程：资产测绘→知识库→漏洞战果→攻击链→得分→报告）；
+  - 9 个 tab 全部加图标（📡📚⚙️🤖🔗🎯⛓️🏆📄），一眼识别功能域；
+  - 无靶标空态改为三步引导卡（创建靶标→资产测绘→情报与战果）；
+  - 知识库 tab 顶部加定位引导条（这是什么/第一步导入/第二步实战回填 verified=1）。
+- **数据库规范化**（`lib/redteam/schema.js` migrateKnowledge）：补 `ix_poc_code`（渠道导入幂等查询路径）、`ix_poc_verified`（面板排序）、`ix_poc_source`（来源分布）三个索引——对 46,709 条正式库已生效，条目完好。
