@@ -8306,31 +8306,11 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 
 		/* 侧栏「破甲控制台」整页渲染：复用 dock 页签与 body，占满 main（页面模式，非弹窗） */
 		function PurgeDockPage() {
-			const t = useT();
-			const st = useDock();
-			const pageSt = Object.assign({}, st, { pageMode: true, open: true });
-			const body = pageSt.tab === "clean"
-				? h(SettingsRoot, { t })
-				: (readDrillAuth() && __dshPurgeDrill.Panel
-					? h(__dshPurgeDrill.Panel, { embedded: false })
-					: h("div", { style: { padding: 16, color: "var(--dsw-alias-label-secondary)" } }, t("dock.unauthorized")));
-			return h("div", { className: "dshp-dock dshp-dock-page", "data-theme": dockTheme === "white" ? "white" : "dusk", "data-open": "1",
-				style: { position: "relative", left: 0, top: 0, width: "100%", height: "100%" } },
-				h("div", { className: "dshp-dock-head" },
-					h("b", null, "🛡 破甲控制台"),
-					h("span", { style: { flex: 1 } }),
-					h("button", { type: "button", onClick: () => setDock({ open: false, authOpen: false, tab: "clean", pending: "tab" }) }, "← 返回对话")),
-				h("div", { className: "dshp-dock-tabs", role: "tablist" },
-					h("button", { type: "button", className: "dshp-dock-tab" + (pageSt.tab === "clean" ? " on" : ""), role: "tab",
-						"aria-selected": pageSt.tab === "clean" ? "true" : "false", onClick: () => setDock({ tab: "clean", authOpen: false, pending: "tab" }) }, t("dock.clean")),
-					h("button", { type: "button", className: "dshp-dock-tab" + (pageSt.tab === "drill" ? " on" : ""), role: "tab",
-						"aria-selected": pageSt.tab === "drill" ? "true" : "false", onClick: () => requestDrill("tab") },
-						t("dock.drill") + (readDrillAuth() ? "" : " · " + t("dock.unauthorized"))),
-					h("button", { type: "button", className: "dshp-dock-tab" + (pageSt.tab === "knowledge" ? " on" : ""), role: "tab",
-						"aria-selected": pageSt.tab === "knowledge" ? "true" : "false", onClick: () => requestKnowledge() },
-						t("dock.knowledge") + (readDrillAuth() ? "" : " · " + t("dock.unauthorized")))),
-				h("div", { className: "dshp-dock-body" }, body));
+			/* 页面模式：复用 PurgeDock 组件本体（内部已支持 st.pageMode 全屏渲染与页签联动）。
+			   main slot 由宿主按侧栏选中态挂载/卸载，open 状态交给用户在页面里控制。 */
+			return h(PurgeDock, { pageMode: true });
 		}
+
 
 		function requestKnowledge() {
 			if (readDrillAuth()) {
@@ -8880,9 +8860,9 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 			);
 		}
 
-		function PurgeDock() {
+		function PurgeDock(props) {
 			const t = useT();
-			const st = useDock();
+			const st = Object.assign({}, useDock(), props && props.pageMode ? { pageMode: true, open: true } : null);
 			const [geom, setGeom] = useState(() => loadDockGeom());
 			const [dockTheme, setDockTheme] = useState(detectHostTheme);
 			useEffect(() => {
