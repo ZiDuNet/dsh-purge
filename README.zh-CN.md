@@ -14,6 +14,7 @@
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| `1.1.94-m6` | 2026-11-08 | 发布 1.1.94：移除背景图、知识库独立入口+双渠道导入、侧栏走 selectPanel(null)、拒绝重试、WorkBuddy/ZCode 插件包、yaklang 技能库；CI 流水线重写 |
 | `1.1.93-m5` | 2026-11-08 | README 重构：中文为默认，原说明降级存档，英文原版移入 `README.md.en-archive` |
 | `1.1.93-m4` | 2026-11-08 | 吸收生态两强：拒绝重试三件套（默认关，`tuning.json` 开启）+ WorkBuddy/ZCode 多客户端插件包（`multi-client/`） |
 | `1.1.93-m3` | 2026-11-08 | 吸收 yaklang 组织：`hack-skills` 103 攻击 playbook + `yak-skills` 12 引擎技能 + `vuldb-pipeline` 数据管道 |

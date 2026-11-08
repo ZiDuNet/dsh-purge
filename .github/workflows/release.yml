@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -21,12 +22,46 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Syntax-check plugin entry
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Syntax-check all shipped JS
         run: |
-          node --check lib/index.js
-          node --check lib/core.js
-          node --check lib/reapply.js
-          node --input-type=module -e "import './lib/index.js'"
+          set -euo pipefail
+          fail=0
+          for f in $(git ls-files '*.js' '*.mjs'); do
+            case "$f" in
+              node_modules/*) continue ;;
+            esac
+            if ! node --check "$f" 2>/tmp/err; then
+              echo "::error file=$f::syntax error"
+              cat /tmp/err
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Verify package manifest and version consistency
+        run: |
+          set -euo pipefail
+          node - <<'JS'
+          const pkg = require('./package.json');
+          const fs = require('fs');
+          const problems = [];
+          if (!pkg.name) problems.push('package.json: missing name');
+          if (!pkg.version) problems.push('package.json: missing version');
+          if (!pkg.main) problems.push('package.json: missing main');
+          if (!pkg.dsh) problems.push('package.json: missing dsh manifest');
+          if (pkg.dsh && (!pkg.dsh.bundle || !pkg.dsh.bundle.patch)) problems.push('package.json: dsh.bundle.patch missing');
+          if (pkg.dsh && pkg.dsh.client && !pkg.dsh.client.platform) problems.push('package.json: dsh.client.platform missing');
+          const upd = fs.readFileSync('lib/update.js', 'utf8');
+          const m = upd.match(/const REPO = "([^"]+)"/);
+          if (!m) problems.push('lib/update.js: REPO constant not found');
+          else if (m[1] !== 'ZiDuNet/dsh-purge') problems.push(`lib/update.js: REPO points to ${m[1]}`);
+          if (problems.length) { problems.forEach((p) => console.log('::error::' + p)); process.exit(1); }
+          console.log('manifest ok: ' + pkg.name + '@' + pkg.version);
+          JS
 
       - name: Publish GitHub Release
         env:
@@ -39,24 +74,30 @@ jobs:
             echo "already published: $tag"
             exit 0
           fi
+          # 首行允许 "# <version>" 或 "# <version> — <任意后缀>"
           first="$(head -n 1 release-notes.md | tr -d '\r')"
-          if [ "$first" != "# ${version}" ]; then
-            echo "release-notes.md 第一行必须是 # ${version}，现在是: ${first}"
-            exit 1
-          fi
+          case "$first" in
+            "# ${version}"|"# ${version} "*|"# ${version} —"*) ;;
+            *)
+              echo "::error::release-notes.md 首行必须以 '# ${version}' 开头，现在是: ${first}"
+              exit 1
+              ;;
+          esac
           zip="dsh-purge-${version}.zip"
-          if git rev-parse -q --verify "refs/tags/${tag}^{}" >/dev/null; then
-            commit="$(git rev-parse "refs/tags/${tag}^{}")"
-            git archive --format=zip --prefix="dsh-purge-${version}/" --output="$zip" "$commit"
-            gh release create "$tag" --title "$tag" --notes-file release-notes.md
-          else
-            git archive --format=zip --prefix="dsh-purge-${version}/" --output="$zip" HEAD
-            args=(release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes-file release-notes.md)
-            case "$version" in
-              *beta*|*alpha*|*rc*) args+=(--prerelease) ;;
-            esac
-            gh "${args[@]}"
-          fi
+          git archive --format=zip --prefix="dsh-purge-${version}/" --output="$zip" HEAD
+          ( cd "dsh-purge-${version}" 2>/dev/null || true )
+          # 生成校验清单
+          tmpdir="$(mktemp -d)"
+          unzip -q "$zip" -d "$tmpdir"
+          ( cd "$tmpdir/dsh-purge-${version}" && find . -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt )
+          cp "$tmpdir/dsh-purge-${version}/SHA256SUMS.txt" "SHA256SUMS-${version}.txt"
+          rm -rf "$tmpdir" "$zip"
+          git archive --format=zip --prefix="dsh-purge-${version}/" --output="$zip" HEAD
+          args=(release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes-file release-notes.md)
+          case "$version" in
+            *beta*|*alpha*|*rc*) args+=(--prerelease) ;;
+          esac
+          gh "${args[@]}"
           test -s "$zip"
-          gh release upload "$tag" "$zip" --clobber
+          gh release upload "$tag" "$zip" "SHA256SUMS-${version}.txt" --clobber
           echo "published https://github.com/ZiDuNet/dsh-purge/releases/tag/${tag}"

@@ -9524,8 +9524,13 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 
 		function apply(ctx) {
 			try { purgeCtxRef = ctx; } catch { /* ignore */ }
+			/* 指南 2.4：apply 内创建的资源都要经 ctx.effect 登记，卸载时逆序回收。
+			   events.register 返回 disposer 时交给 effect；老宿主返回 undefined 则忽略。 */
 			if (ctx.uiConversation && ctx.uiConversation.events && typeof ctx.uiConversation.events.register === "function") {
-				ctx.uiConversation.events.register(purgeCommandInputDefinition);
+				ctx.effect(() => {
+					const off = ctx.uiConversation.events.register(purgeCommandInputDefinition);
+					return typeof off === "function" ? off : undefined;
+				}, "dsh-purge: command-input events");
 				ctx.slots.inject("conversation.chat.node", () => ctx.slots.register({
 					name: "conversation.chat.node", key: "dsh-purge-command-input",
 				}, PurgeCommandInputView));

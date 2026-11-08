@@ -1,4 +1,31 @@
-# 1.1.93 — 2026-11-06
+# 1.1.94
+
+## 中文
+
+- 版本 **1.1.94**（维护版自身迭代线，基于上游 1.1.93）。
+- **移除**：红队模式背景图功能（设置卡 / 背景层 / bgGet·bgSave 接口 / 存量配置全部清除）。
+- **知识库**：复活并统一到 `$DSH_HOME/redteam/knowledge.db`；演练台新增独立「知识库」入口，支持从 ExploitDB（GitLab 官方）与本地 nuclei 模板一键导入（实测 46,709 条，幂等）。
+- **入口**：左侧菜单「破甲控制台」走宿主官方 `ctx.layout.selectPanel(null)`——弹浮窗并保持对话视图；对话 tab 行入口仅红队模式显示。
+- **演练台 UI**：面板命名与副标、tab 图标化、空态三步引导、dock 页签胶囊化；演练台 tab 排移除知识库（避免与独立入口重复）。
+- **拒绝重试**：吸收 Community 1.6.84 的 refusal-retry 三件套（llm/stream 挂载，默认关闭，`tuning.json` 开启）。
+- **多客户端**：`multi-client/` 并入 WorkBuddy / ZCode 插件包（自包含，独立安装）。
+- **技能库**：并入 yaklang `hack-skills`（103 攻击 playbook）与 `yak-skills`（12 引擎技能）。
+- **规范修正**：`uiConversation.events.register` 纳入 `ctx.effect` 生命周期（DSH 插件指南 2.4）。
+- **更新源**：全部指向本仓库 `ZiDuNet/dsh-purge`。
+
+## English
+
+- **1.1.94** (maintenance line on top of upstream 1.1.93).
+- Removed the red-team background-image feature entirely.
+- Knowledge base revived at `$DSH_HOME/redteam/knowledge.db`, standalone dock tab, one-click import from ExploitDB (GitLab) and local nuclei templates (46,709 entries verified, idempotent).
+- Sidebar entry uses the host's official `ctx.layout.selectPanel(null)`: opens the dock and keeps the conversation view.
+- Drill UI polish; knowledge base removed from the drill tab row to avoid duplication.
+- Absorbed Community 1.6.84 refusal-retry (opt-in via `tuning.json`).
+- Absorbed WorkBuddy / ZCode plugin packs under `multi-client/`.
+- Absorbed yaklang `hack-skills` (103 playbooks) and `yak-skills` (12 engine skills).
+- Lifecycle fix: `uiConversation.events.register` now registered through `ctx.effect`.
+- Update sources point to this repository.
+
 
 ## 中文
 
