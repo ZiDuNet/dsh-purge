@@ -3046,7 +3046,7 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 			useEffect(() => {
 				apiPost({ op: 'bgGet' })
 					.then((r) => {
-						const c = { enabled: !!r.enabled, dataUrl: r.dataUrl || '', opacity: 0.22 };
+						const c = { enabled: !!r.enabled, dataUrl: r.dataUrl || '', opacity: 0.5 };
 						setCfg(c); setDraft(c); setLoaded(true);
 						if (r.ok === false) setErr(r.error || '读取失败');
 					})
@@ -3063,7 +3063,7 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 			const save = () => {
 				if (!draft) return;
 				setBusy(true); setErr(null); setMsg(null);
-				apiPost({ op: 'bgSave', enabled: !!draft.enabled, dataUrl: draft.dataUrl || '', opacity: 0.22 })
+				apiPost({ op: 'bgSave', enabled: !!draft.enabled, dataUrl: draft.dataUrl || '', opacity: 0.5 })
 					.then((r) => {
 						if (r.ok === false) { setErr(r.error || '保存失败'); return; }
 						setCfg({ enabled: !!r.enabled, dataUrl: r.dataUrl || '', opacity: Number(r.opacity) || 0.35 });
@@ -3078,7 +3078,7 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 			return h('div', { style: { borderTop: '1px solid var(--dsw-alias-border-l1,#ddd)', marginTop: 14, paddingTop: 12 } },
 				h('h3', { style: { margin: '0 0 6px', fontSize: 13 } }, '🎨 红队模式背景图'),
 				h('div', { style: { fontSize: 12, color: 'var(--dsw-alias-label-secondary,#777)', marginBottom: 8 } },
-					'红队模式会话时铺到对话区背景（固定淡化至 22% 视觉强度，保证正文清晰）。仅本机保存，不上传服务器。'),
+					'红队模式会话时铺到对话区背景（固定 50% 视觉强度）。仅本机保存，不上传服务器。'),
 				err ? h('div', { style: { color: '#b91c1c', fontSize: 12, marginBottom: 6 } }, '✗ ' + err) : null,
 				msg ? h('div', { style: { color: '#15803d', fontSize: 12, marginBottom: 6 } }, msg) : null,
 				h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 } },
@@ -3167,8 +3167,8 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 					}
 					const dark = detectHostTheme() !== 'white';
 					const rgb = dark ? '18,20,24' : '255,252,247';
-					/* 固定淡化：图片只占 22% 视觉权重，保证聊天正文始终清晰可读 */
-					const veil = '0.78';
+					/* 固定淡化：图片占 50% 视觉权重（遮罩 0.50） */
+					const veil = '0.50';
 					el.style.backgroundImage = 'linear-gradient(rgba(' + rgb + ',' + veil + '),rgba(' + rgb + ',' + veil + ')),url(' + cfg.dataUrl + ')';
 					el.style.backgroundSize = 'cover,cover';
 					el.style.backgroundPosition = 'center center, center center';
