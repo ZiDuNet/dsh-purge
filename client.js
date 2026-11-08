@@ -3046,7 +3046,7 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 			useEffect(() => {
 				apiPost({ op: 'bgGet' })
 					.then((r) => {
-						const c = { enabled: !!r.enabled, dataUrl: r.dataUrl || '', opacity: Number(r.opacity) || 0.35 };
+						const c = { enabled: !!r.enabled, dataUrl: r.dataUrl || '', opacity: 0.22 };
 						setCfg(c); setDraft(c); setLoaded(true);
 						if (r.ok === false) setErr(r.error || '读取失败');
 					})
@@ -3063,7 +3063,7 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 			const save = () => {
 				if (!draft) return;
 				setBusy(true); setErr(null); setMsg(null);
-				apiPost({ op: 'bgSave', enabled: !!draft.enabled, dataUrl: draft.dataUrl || '', opacity: draft.opacity })
+				apiPost({ op: 'bgSave', enabled: !!draft.enabled, dataUrl: draft.dataUrl || '', opacity: 0.22 })
 					.then((r) => {
 						if (r.ok === false) { setErr(r.error || '保存失败'); return; }
 						setCfg({ enabled: !!r.enabled, dataUrl: r.dataUrl || '', opacity: Number(r.opacity) || 0.35 });
@@ -3074,11 +3074,11 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 			};
 			if (!loaded) return h('div', { style: { opacity: 0.6, fontSize: 12, padding: 8 } }, '背景图设置加载中…');
 			const d = draft || cfg;
-			const dirty = draft && cfg && (draft.dataUrl !== cfg.dataUrl || draft.opacity !== cfg.opacity || !!draft.enabled !== !!cfg.enabled);
+			const dirty = draft && cfg && (draft.dataUrl !== cfg.dataUrl || !!draft.enabled !== !!cfg.enabled);
 			return h('div', { style: { borderTop: '1px solid var(--dsw-alias-border-l1,#ddd)', marginTop: 14, paddingTop: 12 } },
 				h('h3', { style: { margin: '0 0 6px', fontSize: 13 } }, '🎨 红队模式背景图'),
 				h('div', { style: { fontSize: 12, color: 'var(--dsw-alias-label-secondary,#777)', marginBottom: 8 } },
-					'红队模式会话时铺到对话区背景（自动按主题淡化，不影响文字）。仅本机保存，不上传服务器。'),
+					'红队模式会话时铺到对话区背景（固定淡化至 22% 视觉强度，保证正文清晰）。仅本机保存，不上传服务器。'),
 				err ? h('div', { style: { color: '#b91c1c', fontSize: 12, marginBottom: 6 } }, '✗ ' + err) : null,
 				msg ? h('div', { style: { color: '#15803d', fontSize: 12, marginBottom: 6 } }, msg) : null,
 				h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 } },
@@ -3088,11 +3088,6 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 					d.dataUrl ? h('img', { src: d.dataUrl, alt: '预览', style: { height: 44, borderRadius: 6, border: '1px solid var(--dsw-alias-border-l1,#ddd)' } }) : h('span', { style: { fontSize: 12, color: 'var(--dsw-alias-label-secondary,#999)' } }, '（未选择图片）')),
 				h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' } },
 					h('input', { type: 'file', accept: 'image/*', onChange: onFile, style: { fontSize: 12 } }),
-					h('span', { style: { fontSize: 12 } }, '透明度'),
-					h('input', { type: 'range', min: 5, max: 100, value: Math.round((d.opacity || 0.35) * 100),
-						onChange: (e) => setDraft(Object.assign({}, d, { opacity: Number(e.target.value) / 100 })),
-						style: { width: 120 } }),
-					h('span', { style: { fontSize: 12, minWidth: 34 } }, Math.round((d.opacity || 0.35) * 100) + '%'),
 					h('button', { type: 'button', disabled: busy || !dirty,
 						onClick: save,
 						style: { font: '12.5px/1 inherit', padding: '6px 14px', borderRadius: 7, cursor: dirty ? 'pointer' : 'default',
@@ -3172,7 +3167,8 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 					}
 					const dark = detectHostTheme() !== 'white';
 					const rgb = dark ? '18,20,24' : '255,252,247';
-					const veil = Math.max(0, Math.min(1, 1 - (cfg.opacity || 0.35))).toFixed(2);
+					/* 固定淡化：图片只占 22% 视觉权重，保证聊天正文始终清晰可读 */
+					const veil = '0.78';
 					el.style.backgroundImage = 'linear-gradient(rgba(' + rgb + ',' + veil + '),rgba(' + rgb + ',' + veil + ')),url(' + cfg.dataUrl + ')';
 					el.style.backgroundSize = 'cover,cover';
 					el.style.backgroundPosition = 'center center, center center';
