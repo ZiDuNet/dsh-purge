@@ -2,6 +2,11 @@
   <img src="docs/banner.svg" alt="dsh-purge" width="720">
 </p>
 
+> [!IMPORTANT]
+> **原作者因不可抗力因素已删库。** 本仓库基于上游最后版本（1.1.93）继续开发并长期维护，
+> **已拆除全部源代码围栏**（区域拦截闸、知识库下架短路、官方身份/审批/沙箱围栏一并清除）。
+> 更新与发布全部走本仓库：`ZiDuNet/dsh-purge`。以下内容为原作者的原说明，整体降级存档。
+
 <h1 align="center">⚔️ DeepSeek Harness 网络安全红队工具（dsh-purge）</h1>
 
 <p align="center"><strong>Version 1.1.93</strong></p>
@@ -12,7 +17,7 @@
 
 <p align="center">
   <a href="https://github.com/ZiDuNet/dsh-purge/stargazers"><img src="https://img.shields.io/github/stars/ZiDuNet/dsh-purge?logo=github&label=Stars" alt="GitHub stars"></a>
-  <a href="https://github.com/ZiDuNet/dsh-purge/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat" alt="Apache-2.0"></a>
+  <a href="https://github.com/ZiDuNet/dsh-purge/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat" alt="Apache-2.0"></a>
   <a href="https://awesome-dsh-plugin.com"><img src="https://awesome-dsh-plugin.com/badge.svg" alt="awesome · DSH plugin"></a>
   <a href="https://deepseek.stream/plugins/dsh-purge"><img src="https://img.shields.io/badge/Hub-dsh--purge-1a73e8" alt="DeepSeek Harness Hub"></a>
   <a href="https://www.deepseek.com/harness/"><img src="https://img.shields.io/badge/dsh-0.2.2--rc.1%20%2F%200.2.1--rc.5%20%2F%200.2.1--rc.2-blue" alt="DSH"></a>
