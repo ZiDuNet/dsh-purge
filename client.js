@@ -8306,19 +8306,13 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 
 		/* 侧栏「破甲控制台」整页渲染：复用 dock 页签与 body，占满 main（页面模式，非弹窗） */
 		function PurgeDockPage() {
-			/* 侧栏入口定稿：点击菜单 = 拉起浮窗（弹窗模式），本页只留占位引导。 */
-			const st = useDock();
-			const t = useT();
-			React.useEffect(() => {
-				try { setDock({ open: true, tab: st.tab || "drill", authOpen: false, pageMode: false, pending: "tab" }); } catch { /* ignore */ }
-			}, []);
+			/* 侧栏入口定稿：点菜单 = 打开浮窗（弹窗模式），本页零 React 依赖（纯占位）。 */
+			setTimeout(() => {
+				try { setDock({ open: true, tab: "drill", authOpen: false, pageMode: false, pending: "tab" }); } catch { /* ignore */ }
+			}, 0);
 			return h("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", height: "70vh", flexDirection: "column", gap: 12 } },
 				h("div", { style: { fontSize: 15, fontWeight: 600 } }, "🛡 破甲控制台已在浮窗打开"),
-				h("div", { style: { fontSize: 12.5, color: "var(--dsw-alias-label-secondary)" } },
-					st.open ? "浮窗在对话页上方，点击页面任意处可回到对话。" : "若浮窗未出现，点下面按钮重新打开。"),
-				st.open ? null : h("button", { type: "button", className: "rt-btn rt-btn-primary",
-					onClick: () => setDock({ open: true, tab: st.tab || "drill", authOpen: false, pageMode: false, pending: "tab" }) },
-					"打开破甲控制台"));
+				h("div", { style: { fontSize: 12.5, color: "var(--dsw-alias-label-secondary)" } }, "点击页面任意处回到对话。"));
 		}
 
 
@@ -9525,7 +9519,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 				name: "shell.overlay",
 				id: "dsh-purge-dock",
 				order: 50,
-			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeDock), h(EnvAdaptSendGate), h(RewindDockMount))));
+			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeDock), h(TabRowPurgeMount), h(EnvAdaptSendGate), h(RewindDockMount))));
 			/* 左侧菜单入口（与「对话」等同级页面）：侧栏图标 + main 整页（页面模式，非弹窗） */
 			try {
 				const ShieldIcon = () => h("svg", { viewBox: "0 0 64 64", width: 18, height: 18, "aria-hidden": true, style: { display: "block" } },
