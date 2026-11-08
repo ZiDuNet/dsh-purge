@@ -1,4 +1,28 @@
-# 1.1.95
+# 1.1.96
+
+## 中文
+
+- 版本 **1.1.96**。
+- **新增安全离开（停用 / 卸载都不破坏 DSH）**：
+  - `lib/safe-leave.js`：`locate → revert-patches → revert-shims → revert-flash → verify` 五阶段，回滚后自检宿主是否仍含 `[dsh-purge]` / `__dsh_purge_` 标记。
+  - **停用路径自动执行**：配置 `enabled: false` 时先回滚宿主补丁；回滚不干净则**拒绝停用**（记录 `__dshPurgeDisableBlocked`），避免留下无人维护的孤儿补丁。
+  - **卸载路径加残留自检**：`uninstall` 在删除插件目录前校验宿主已无插件标记，未干净即中止。
+  - 新命令 `/purge leave`：输出五阶段结果 + 保留数据清单，作为停用/卸载前的安全准备。
+- **数据保留承诺**：`prompt-inject.md`、`~/.dsh/redteam/`（知识库 4.6 万条 + 靶标/漏洞/凭据/报告）、`~/.dsh/dsh-purge/` 在停用与卸载时**均不删除**。
+- **删除范围严格限定** `*/node_modules/dsh-purge`，npm link / file: 安装不会误删源码仓库；不碰注册表、服务、驱动。
+- 文档：`docs/SAFE-LEAVE.md`（两种离开方式、数据保留表、离开后自检命令、恢复方法）。
+
+## English
+
+- **1.1.96**.
+- New: safe-leave for disable/uninstall — `locate → revert-patches → revert-shims → revert-flash → verify`, with post-revert residue check for `[dsh-purge]` / `__dsh_purge_` markers.
+- Disable path now reverts host patches first and refuses to disable if the revert is unclean (records `__dshPurgeDisableBlocked`), so no orphan patches are left behind.
+- Uninstall now verifies host residue before deleting the plugin tree; unclean reverts abort the uninstall.
+- New `/purge leave` command reporting all five stages plus the retained-data list.
+- Data retention: `prompt-inject.md`, `~/.dsh/redteam/` (46k knowledge entries + engagements/vulns/credentials/reports) and `~/.dsh/dsh-purge/` are never deleted on disable or uninstall.
+- Deletion is limited to `*/node_modules/dsh-purge`; no registry, service or driver changes.
+- Docs: `docs/SAFE-LEAVE.md`.
+
 
 ## 中文
 
