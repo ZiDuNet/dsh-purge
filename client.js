@@ -3033,172 +3033,6 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 		}
 
 
-		/* 红队模式对话区背景图：设置卡（上传/URL/透明度/开关）+ 全局背景层 */
-		function RedteamBgCard() {
-			const [cfg, setCfg] = useState({ enabled: false, dataUrl: "", opacity: 0.35 });
-			const [draft, setDraft] = useState(null);
-			const [loaded, setLoaded] = useState(false);
-			const [err, setErr] = useState(null);
-			const [msg, setMsg] = useState(null);
-			const [busy, setBusy] = useState(false);
-			const apiPost = (body) => fetch('/redteam/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
-				.then((r) => r.text().then((x) => { try { return JSON.parse(x); } catch { return { ok: false, error: r.status + ' 非 JSON' }; } }));
-			useEffect(() => {
-				apiPost({ op: 'bgGet' })
-					.then((r) => {
-						const c = { enabled: !!r.enabled, dataUrl: r.dataUrl || '', opacity: 0.5 };
-						setCfg(c); setDraft(c); setLoaded(true);
-						if (r.ok === false) setErr(r.error || '读取失败');
-					})
-					.catch((e) => { setErr(String(e.message || e)); setLoaded(true); });
-			}, []);
-			const onFile = (e) => {
-				const f = e.target.files && e.target.files[0];
-				if (!f) return;
-				if (f.size > 6 * 1024 * 1024) { setErr('图片超过 6MB，请压缩后再传'); return; }
-				const rd = new FileReader();
-				rd.onload = () => { setDraft(Object.assign({}, draft, { dataUrl: String(rd.result) })); setErr(null); setMsg('已选择图片，点「保存」生效'); };
-				rd.readAsDataURL(f);
-			};
-			const save = () => {
-				if (!draft) return;
-				setBusy(true); setErr(null); setMsg(null);
-				apiPost({ op: 'bgSave', enabled: !!draft.enabled, dataUrl: draft.dataUrl || '', opacity: 0.5 })
-					.then((r) => {
-						if (r.ok === false) { setErr(r.error || '保存失败'); return; }
-						setCfg({ enabled: !!r.enabled, dataUrl: r.dataUrl || '', opacity: Number(r.opacity) || 0.35 });
-						setMsg('已保存 ✓ 刷新页面或切到红队会话即生效');
-					})
-					.catch((e) => setErr(String(e.message || e)))
-					.finally(() => setBusy(false));
-			};
-			if (!loaded) return h('div', { style: { opacity: 0.6, fontSize: 12, padding: 8 } }, '背景图设置加载中…');
-			const d = draft || cfg;
-			const dirty = draft && cfg && (draft.dataUrl !== cfg.dataUrl || !!draft.enabled !== !!cfg.enabled);
-			return h('div', { style: { borderTop: '1px solid var(--dsw-alias-border-l1,#ddd)', marginTop: 14, paddingTop: 12 } },
-				h('h3', { style: { margin: '0 0 6px', fontSize: 13 } }, '🎨 红队模式背景图'),
-				h('div', { style: { fontSize: 12, color: 'var(--dsw-alias-label-secondary,#777)', marginBottom: 8 } },
-					'红队模式会话时铺到对话区背景（固定 50% 视觉强度）。仅本机保存，不上传服务器。'),
-				err ? h('div', { style: { color: '#b91c1c', fontSize: 12, marginBottom: 6 } }, '✗ ' + err) : null,
-				msg ? h('div', { style: { color: '#15803d', fontSize: 12, marginBottom: 6 } }, msg) : null,
-				h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 } },
-					h('label', { style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, cursor: 'pointer' } },
-						h('input', { type: 'checkbox', checked: !!d.enabled, onChange: (e) => setDraft(Object.assign({}, d, { enabled: e.target.checked })) }),
-						'启用（仅红队模式）'),
-					d.dataUrl ? h('img', { src: d.dataUrl, alt: '预览', style: { height: 44, borderRadius: 6, border: '1px solid var(--dsw-alias-border-l1,#ddd)' } }) : h('span', { style: { fontSize: 12, color: 'var(--dsw-alias-label-secondary,#999)' } }, '（未选择图片）')),
-				h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' } },
-					h('input', { type: 'file', accept: 'image/*', onChange: onFile, style: { fontSize: 12 } }),
-					h('button', { type: 'button', disabled: busy || !dirty,
-						onClick: save,
-						style: { font: '12.5px/1 inherit', padding: '6px 14px', borderRadius: 7, cursor: dirty ? 'pointer' : 'default',
-							border: '1px solid var(--dsw-alias-brand-primary,#3d8f68)', opacity: dirty ? 1 : 0.55,
-							background: dirty ? 'var(--dsw-alias-brand-primary,#3d8f68)' : 'transparent',
-							color: dirty ? '#fff' : 'var(--dsw-alias-brand-primary,#3d8f68)' } },
-						busy ? '保存中…' : '保存'),
-					d.dataUrl ? h('button', { type: 'button', disabled: busy,
-						onClick: () => setDraft(Object.assign({}, d, { dataUrl: '', enabled: false })),
-						style: { font: '12px/1 inherit', padding: '6px 10px', borderRadius: 7, cursor: 'pointer', border: '1px solid var(--dsw-alias-border-l1,#ccc)', background: 'transparent' } }, '清除图片') : null));
-		}
-
-		function RedteamBgLayer() {
-			const [cfg, setCfg] = useState(null);
-			const [rt, setRt] = useState(false);
-			useEffect(() => {
-				fetch('/redteam/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'bgGet' }) })
-					.then((r) => r.json())
-					.then((r) => setCfg({ enabled: !!r.enabled, dataUrl: r.dataUrl || '', opacity: Number(r.opacity) || 0.35 }))
-					.catch(() => setCfg({ enabled: false }));
-			}, []);
-			useEffect(() => {
-				const sync = () => {
-					let on = false;
-					try {
-						on = isRedteamModeActive();
-					} catch { on = false; }
-					/* 加严：再独立校验当前会话的 agentPreset 是否真是 redteam，
-					   避免 isRedteamModeActive 的 DOM 兜底（模式下拉/标签文本）在普通会话误判。 */
-					if (on) {
-						try {
-							const sessions = rewindSessions || (rewindHost && rewindHost.sessions);
-							const sid = currentSessionId(sessions);
-							let preset = "";
-							if (sid && sessions) {
-								const snap = typeof sessions.list?.getSnapshot === "function" ? sessions.list.getSnapshot() : null;
-								const sess = snap && snap.byId ? snap.byId[sid] : null;
-								preset = readSessionAgentPreset(sess) || "";
-							}
-							if (preset) on = isRedteamPresetId(preset);
-							else on = false;   /* 拿不到会话 preset：宁可不铺，避免污染普通会话 */
-						} catch { on = false; }
-					}
-					setRt(on);
-				};
-				sync();
-				const iv = setInterval(sync, 1000);
-				return () => clearInterval(iv);
-			}, []);
-			useEffect(() => {
-				if (!cfg) return undefined;
-				const on = !!cfg.enabled && !!cfg.dataUrl && !!rt;
-				/* 非红队或未启用：确保把之前的绘制清掉 */
-				if (!on) {
-					for (const el of document.querySelectorAll('[data-dsh-purge-bg]')) {
-						try {
-							el.style.backgroundImage = '';
-							el.style.backgroundSize = '';
-							el.style.backgroundPosition = '';
-							el.style.backgroundAttachment = '';
-							el.style.backgroundRepeat = '';
-							el.removeAttribute('data-dsh-purge-bg');
-						} catch { /* ignore */ }
-					}
-					return undefined;
-				}
-				const attr = 'data-dsh-purge-bg';
-				const paint = (el) => {
-					if (!on) {
-						el.style.backgroundImage = '';
-						el.style.backgroundSize = '';
-						el.style.backgroundPosition = '';
-						el.style.backgroundAttachment = '';
-						el.style.backgroundRepeat = '';
-						el.removeAttribute(attr);
-						return;
-					}
-					const dark = detectHostTheme() !== 'white';
-					const rgb = dark ? '18,20,24' : '255,252,247';
-					/* 固定淡化：图片占 50% 视觉权重（遮罩 0.50） */
-					const veil = '0.50';
-					el.style.backgroundImage = 'linear-gradient(rgba(' + rgb + ',' + veil + '),rgba(' + rgb + ',' + veil + ')),url(' + cfg.dataUrl + ')';
-					el.style.backgroundSize = 'cover,cover';
-					el.style.backgroundPosition = 'center center, center center';
-					el.style.backgroundAttachment = 'fixed, fixed';
-					el.style.backgroundRepeat = 'no-repeat, no-repeat';
-					el.setAttribute(attr, '1');
-				};
-				const tick = () => {
-					/* 主锚点：宿主对话滚动容器；退化：主工作区容器 */
-					const targets = [
-						document.querySelector('[data-conversation-scroll]'),
-						document.querySelector('[class*="conversationScroll" i]'),
-						document.querySelector('main'),
-					].filter(Boolean);
-					if (!targets.length) return;
-					for (const el of targets) { try { paint(el); } catch { /* ignore */ } }
-				};
-				tick();
-				const iv = setInterval(tick, 1500);
-				const obs = typeof MutationObserver !== 'undefined' ? new MutationObserver(tick) : null;
-				try { if (obs && document.body) obs.observe(document.body, { childList: true, subtree: true }); } catch { /* ignore */ }
-				return () => {
-					clearInterval(iv);
-					try { obs?.disconnect(); } catch { /* ignore */ }
-					for (const el of document.querySelectorAll('[' + attr + ']')) { try { paint(el); } catch { /* ignore */ } }
-				};
-			}, [cfg, rt]);
-			return null;
-		}
-
 		function SettingsRoot(props) {
 			useEffect(() => () => stopRestartPolling(), []);
 			const t = typeof props.t === "function" ? props.t : ((key) => key);
@@ -3237,7 +3071,6 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 				h("style", null, PURGE_CSS),
 				h(PurgifySection, null),
 				h(RulesSection, null),
-				h(RedteamBgCard, null),
 			);
 		}
 
@@ -9704,7 +9537,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 				name: "shell.overlay",
 				id: "dsh-purge-dock",
 				order: 50,
-			}, () => h(react.Fragment, null, h(WelcomeNotice), h(RedteamBgLayer), h(PurgeDock), h(TabRowPurgeMount), h(EnvAdaptSendGate), h(RewindDockMount))));
+			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeDock), h(TabRowPurgeMount), h(EnvAdaptSendGate), h(RewindDockMount))));
 			/* 左侧菜单入口（与「对话」等同级页面）：侧栏图标 + main 整页（页面模式，非弹窗） */
 			try {
 				const ShieldIcon = () => h("svg", { viewBox: "0 0 64 64", width: 18, height: 18, "aria-hidden": true, style: { display: "block" } },
