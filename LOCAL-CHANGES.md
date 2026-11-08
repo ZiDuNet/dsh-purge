@@ -31,3 +31,7 @@
 ## 校验
 - 全部 JS：`node --check` 通过（60+ 文件）。
 - SHA256SUMS.txt 由 `sha256sum` 生成，覆盖本树全部文件。
+
+## 7. 知识库复活（lib/redteam/tools.js + store-core.js）
+- 原版在 MCP 工具层（tools.js 6 处 `return KB_DISABLED`）与面板 API 路由层（store-core.js pocSearch/pocList/pocGet/pocSave/pocUpdate/pocDelete/pocUse/pocStats 八操作短路）把知识库整体下架，返回「开源版已下架知识库」——但全部真实实现（SQLite poc 表 + FTS5 全文索引 + 落盘 pocs/ 目录 + markPocUsed 复用记账）一直都在包里，README 也声称开源版含知识库。
+- 处置：删除 6 处短路 return（真实实现复活）；路由层删除短路块并补 8 个分发分支接回 store 真实方法。空库起步：条目靠 redteam_poc_add 回填（来源本机 nuclei 模板命中 + 实战录入），即 release-notes 所述「运行时生成的本地数据库」。
