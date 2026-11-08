@@ -41,3 +41,11 @@
 - **后期目标**：替换为**线上 RAG 知识库**——POC/EXP 正文向量化检索（语义匹配代替 FTS 关键词），多机共享弹药库（各靶标实战回填统一沉淀），按「verified → 复用次数 → 向量相似度」排序。
 - **改造点（到时改这三处即可）**：`lib/redteam/tools.js` 六个 `redteam_poc_*` 工具的 execute（当前直调 store）；`lib/redteam/store-core.js` 的 `searchPocs`/`savePoc`/`getPoc`/`updatePoc`/`deletePoc`/`markPocUsed`（换成 RAG API 客户端，接口语义保持）；面板路由层第 7 项的 8 个 op 分发（透传到 RAG 后端）。工具 schema 不用动，智能体侧无感切换。
 - 预留：`redteam_poc_search` 的返回结构保持 `{results:[...], count}`，RAG 版按相似度字段补 `score` 即可。
+
+## 9. 吸收 yaklang 组织开源内容（2026-11-08）
+- `skills/hack-skills/`：[yaklang/hack-skills](https://github.com/yaklang/hack-skills)（MIT）103 个 AI 攻击 playbook 全量并入——每技能 SKILL.md + SCENARIOS/TRICKS 伴随文档，定位「只讲基础模型不会的招」，与本仓库工具链技能互补。
+- `skills/yak-skills/`：[yaklang/yak-skills](https://github.com/yaklang/yak-skills)（MIT）Yaklang DSL/Yakit 平台 12 技能——热加载改包、插件开发、db 库。
+- `skills/redteam/` 新增 3 个索引技能：`hack-skills-index.md`（103 技能分类索引+加载指引）、`yak-skills-index.md`（12 技能索引+引擎安装）、`vuldb-pipeline.md`（CVE/ExploitDB→知识库导入管道）。
+- `yaklang/vuldb`（Go 爬虫）不搬运源码，作为数据管道引用；后续拉库后按 vuldb-pipeline 批量喂知识库。
+- `yaklang/yaklang-rag-for-plugins`（RAG 数据集格式）留作第 8 项线上 RAG 改造的格式参考。
+- README 三份已补来源致谢（MIT 许可声明保留于 skills/hack-skills/LICENSE、skills/yak-skills/LICENSE）。

@@ -74,6 +74,11 @@ dsh-purge は当初、原作者が個人で開発したプロジェクトです�
 
 ---
 
+> **技能库部分内容吸收自开源社区（MIT，已保留许可声明）：**
+> [yaklang/hack-skills](https://github.com/yaklang/hack-skills)（103 个 AI 攻击 playbook，见 `skills/hack-skills/`）、
+> [yaklang/yak-skills](https://github.com/yaklang/yak-skills)（Yaklang/Yakit 12 技能，见 `skills/yak-skills/`）、
+> [yaklang/vuldb](https://github.com/yaklang/vuldb)（CVE/ExploitDB 数据管道，见 `skills/redteam/vuldb-pipeline.md`）。
+
 ## これは何か
 
 **dsh-purge** は、お使いのマシンにすでにインストールされている公式 [DeepSeek Harness](https://www.deepseek.com/harness/) 向けのサイバーセキュリティ レッドチームプラグインです。**1.1.93** は **DSH 0.2.2-rc.1**、**0.2.1-rc.5**、**0.2.1-rc.2** を対象とします（0.2.0 も動作します）。公式 **Web**（`dsh web`）と公式 **デスクトップ EXE** の両方に対応します。インストールと Apply はそれぞれ別々に行います。
