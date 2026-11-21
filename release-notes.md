@@ -1,4 +1,24 @@
-# 1.1.96
+# 1.1.97
+
+## 中文
+
+- 版本 **1.1.97**：适配 DSH 宿主 **0.2.2-rc.5**（原适配 0.2.2-rc.1）。
+- **修复 6 条因上游重构而漂移的补丁**：
+  - `#13` / `#35` 升级审批豁免：官方把 `throw new Error(...)` 改为 `throw new SandboxEscalationError(..., "CODE")`，并新增 `throwIfAborted()` —— 已按 rc.5 原文重写 pattern（保留旧版兼容）。
+  - `#62` 工具审批放行：官方把内联 `{ kind: "deny", reason }` 改为 `approvalDenial(reason, CODE)` 辅助函数 —— 三处 deny 分支全部对齐。
+  - `#18` 重复工具提醒禁用：rc.5 删掉了 `downstream.kind === "block"` 分支 —— 按新结构重写。
+- **新增 `obsoleteWhenAbsent` 机制**：补丁可声明"功能已被上游移除"的关键符号；这些符号在目标文件里一个不剩时判为 `na`（不适用）而不是永久 `drifted`。用于 `#56`/`#77`（rc.5 把 conversation-client 重构成压缩单包，回退 UI 那套符号整体消失）。
+- **版本白名单**：`dshTarget` → `0.2.2-rc.5`，`dshTargets` 追加 rc.5；`host_supported` 恢复 `true`。
+- 实测结果：宿主 0.2.2-rc.5 上 **69 条已应用 / 0 条漂移 / 0 条待应用**，服务启动零错误。
+
+## English
+
+- **1.1.97**: adapted to DSH host **0.2.2-rc.5** (was 0.2.2-rc.1).
+- Fixed six patches drifted by upstream refactors: `#13`/`#35` (escalation now throws `SandboxEscalationError` with a code, plus `throwIfAborted()`), `#62` (inline deny objects became `approvalDenial(reason, CODE)`), `#18` (the `downstream.kind === "block"` branch was removed).
+- New `obsoleteWhenAbsent`: a patch can declare symbols that only exist while the feature exists; when none remain the patch reports `na` instead of drifting forever. Applied to `#56`/`#77` (conversation-client was collapsed into a minified single bundle in rc.5 and the rewind UI symbols are gone).
+- Version gate: `dshTarget` → `0.2.2-rc.5`, `dshTargets` includes rc.5; `host_supported` is `true` again.
+- Verified on 0.2.2-rc.5: **69 applied / 0 drifted / 0 pending**, clean host startup.
+
 
 ## 中文
 
